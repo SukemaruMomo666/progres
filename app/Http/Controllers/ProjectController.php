@@ -15,7 +15,7 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi input sesuai dengan kolom yang ada di database
+        // Validasi input
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
             'client_name'   => 'required|string|max:255',
@@ -70,6 +70,52 @@ class ProjectController extends Controller
     }
 
     /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, $id)
+    {
+        // Proteksi Otoritas: Hanya Role Founder, Co-Founder, dan HR yang boleh mengedit
+        if (!auth()->user()->hasRole(['Founder', 'Co-Founder', 'HR'])) {
+            abort(403, 'Anda tidak memiliki otoritas untuk mengedit data proyek.');
+        }
+
+        $validated = $request->validate([
+            'name'          => 'required|string|max:255',
+            'client_name'   => 'required|string|max:255',
+            'client_phone'  => 'nullable|string|max:20',
+            'pic_id'        => 'required|exists:users,id',
+            'finder_id'     => 'required|exists:users,id',
+            'total_price'   => 'required|numeric',
+            'start_date'    => 'required|date',
+            'deadline'      => 'required|date',
+        ]);
+
+        $project = Project::findOrFail($id);
+
+        DB::transaction(function () use ($project, $validated) {
+            // 1. Update Data Klien yang berelasi
+            if ($project->client) {
+                $project->client->update([
+                    'name'  => $validated['client_name'],
+                    'phone' => $validated['client_phone'],
+                ]);
+            }
+
+            // 2. Update Data Proyek (Tidak menyentuh DP agar riwayat finance aman)
+            $project->update([
+                'name'        => $validated['name'],
+                'pic_id'      => $validated['pic_id'],
+                'finder_id'   => $validated['finder_id'],
+                'total_price' => $validated['total_price'],
+                'start_date'  => $validated['start_date'],
+                'deadline'    => $validated['deadline'],
+            ]);
+        });
+
+        return redirect()->route('dashboard')->with('success', 'Detail operasional proyek berhasil diperbarui.');
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy($id)
@@ -83,7 +129,7 @@ class ProjectController extends Controller
         $project = Project::findOrFail($id);
         
         DB::transaction(function () use ($project) {
-            // PERBAIKAN: Hapus total semua data keuangan yang terikat dengan proyek ini 
+            // Hapus total semua data keuangan yang terikat dengan proyek ini 
             // sehingga pembukuan di page finance ikut bersih tanpa perlu cek kolom 'status'
             if ($project->finances()) {
                 $project->finances()->delete();

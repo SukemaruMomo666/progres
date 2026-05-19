@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/users-management', [UserController::class, 'store'])->name('admin.users.store');
         Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
         Route::patch('/users-management/{id}/role', [UserController::class, 'updateRole'])->name('admin.users.update-role');
+        Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('project.update');
 
         // Modul Keuangan & Performa
         Route::get('/finance', [FinanceController::class, 'index'])->name('finance.index');

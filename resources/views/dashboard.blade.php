@@ -18,14 +18,29 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-[#F4F7F6] text-gray-800 antialiased relative overflow-x-hidden" x-data="{ openCreateModal: false }">
+<body class="bg-[#F4F7F6] text-gray-800 antialiased relative overflow-x-hidden" 
+      x-data="{ 
+          openCreateModal: false, 
+          openEditModal: false, 
+          editUrl: '', 
+          form: { 
+              name: '', 
+              client_name: '', 
+              client_phone: '', 
+              pic_id: '', 
+              finder_id: '', 
+              total_price: '', 
+              start_date: '', 
+              deadline: '' 
+          } 
+      }">
 
     <div class="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-gray-200/60 via-gray-100/30 to-transparent -z-10 pointer-events-none"></div>
     <div class="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-indigo-100/40 to-transparent blur-3xl -z-10 pointer-events-none"></div>
 
     <x-navbar title="Project Dashboard" />
 
-<main class="max-w-7xl mx-auto px-8 py-12 relative z-10">
+    <main class="max-w-7xl mx-auto px-8 py-12 relative z-10">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
             <div>
@@ -53,8 +68,6 @@
             </div>
         </div>
 
-
-
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @forelse($projects as $project)
                 <div class="group block bg-white/70 backdrop-blur-xl rounded-[2rem] p-7 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-2 hover:bg-white transition-all duration-400 relative overflow-hidden">
@@ -71,7 +84,24 @@
                         <div class="flex items-center gap-2 relative z-20">
                             
                             @role('Founder|Co-Founder|HR')
-                            <form action="{{ route('project.destroy', $project->id) }}" method="POST" onsubmit="return confirm('⚠️ PERINGATAN: Apakah Anda yakin ingin membuang proyek ini? Segala bentuk kartu tugas, histori chat, dan lampiran developer di dalamnya akan ikut terhapus!');">
+                            {{-- TOMBOL EDIT PROYEK --}}
+                            <button type="button" @click.prevent="
+                                openEditModal = true;
+                                editUrl = '{{ route('project.update', $project->id) }}';
+                                form.name = '{{ addslashes($project->name) }}';
+                                form.client_name = '{{ addslashes($project->client->name ?? '') }}';
+                                form.client_phone = '{{ addslashes($project->client->phone ?? '') }}';
+                                form.pic_id = '{{ $project->pic_id }}';
+                                form.finder_id = '{{ $project->finder_id }}';
+                                form.total_price = '{{ $project->total_price }}';
+                                form.start_date = '{{ \Carbon\Carbon::parse($project->start_date)->format('Y-m-d') }}';
+                                form.deadline = '{{ \Carbon\Carbon::parse($project->deadline)->format('Y-m-d') }}';
+                            " class="w-8 h-8 rounded-full bg-white border border-indigo-100 text-indigo-500 hover:bg-indigo-500 hover:text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer" title="Edit Proyek">
+                                <svg class="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                            </button>
+
+                            {{-- TOMBOL HAPUS PROYEK --}}
+                            <form action="{{ route('project.destroy', $project->id) }}" method="POST" onsubmit="return confirm('⚠️ PERINGATAN: Apakah Anda yakin ingin membuang proyek ini?');" class="m-0">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="w-8 h-8 rounded-full bg-white border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer" title="Hapus Proyek Ini">
@@ -133,21 +163,10 @@
         </div>
     </main>
 
+    {{-- MODAL CREATE PROJECT --}}
     <div x-cloak x-show="openCreateModal" class="fixed inset-0 z-[100] overflow-y-auto flex items-center justify-center p-4 sm:p-6">
-        
-        <div x-show="openCreateModal" 
-             x-transition.opacity.duration.300ms 
-             class="fixed inset-0 bg-gray-900/60 backdrop-blur-md" 
-             @click="openCreateModal = false"></div>
-        
-        <div x-show="openCreateModal" 
-             x-transition:enter="ease-out duration-300" 
-             x-transition:enter-start="opacity-0 translate-y-8 scale-95" 
-             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-             x-transition:leave="ease-in duration-200" 
-             x-transition:leave-start="opacity-100 translate-y-0 scale-100" 
-             x-transition:leave-end="opacity-0 translate-y-8 scale-95"
-             class="relative z-[101] bg-white rounded-[2.5rem] p-8 shadow-[0_30px_60px_rgba(0,0,0,0.25)] w-full max-w-3xl border border-gray-100 max-h-[90vh] overflow-y-auto" style="scrollbar-width: thin;">
+        <div x-show="openCreateModal" x-transition.opacity.duration.300ms class="fixed inset-0 bg-gray-900/60 backdrop-blur-md" @click="openCreateModal = false"></div>
+        <div x-show="openCreateModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative z-[101] bg-white rounded-[2.5rem] p-8 shadow-[0_30px_60px_rgba(0,0,0,0.25)] w-full max-w-3xl border border-gray-100 max-h-[90vh] overflow-y-auto" style="scrollbar-width: thin;">
             
             <div class="flex justify-between items-start pb-6 border-b border-gray-100 mb-6 sticky top-0 bg-white z-10">
                 <div>
@@ -161,32 +180,28 @@
 
             @if(!$activePeriod)
                 <div class="bg-red-50 border border-red-100 rounded-2xl p-6 flex gap-4 items-start">
-                    <div class="bg-white p-2 rounded-xl shadow-sm border border-red-100/50">
-                        <span class="text-2xl">⚠️</span>
-                    </div>
+                    <div class="bg-white p-2 rounded-xl shadow-sm border border-red-100/50"><span class="text-2xl">⚠️</span></div>
                     <div>
                         <h4 class="text-red-800 font-extrabold mb-1">Sistem Terkunci</h4>
-                        <p class="text-sm text-red-600 font-medium leading-relaxed">Anda tidak dapat membuat proyek baru karena tidak ada Periode Kerja yang aktif. Silakan buka kuartal baru di menu <a href="{{ route('performance.index') }}" class="underline font-bold hover:text-red-800">Evaluasi Tim</a> terlebih dahulu.</p>
+                        <p class="text-sm text-red-600 font-medium leading-relaxed">Anda tidak dapat membuat proyek baru karena tidak ada Periode Kerja yang aktif.</p>
                     </div>
                 </div>
             @else
             <form action="{{ route('project.store') }}" method="POST" class="space-y-6">
                 @csrf
-                
                 <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-5">
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Proyek / Aplikasi</label>
-                        <input type="text" name="name" required placeholder="Contoh: Aplikasi Sistem EWS RADAR" class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none shadow-sm">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Proyek</label>
+                        <input type="text" name="name" required class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:border-indigo-500 outline-none">
                     </div>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Klien / Instansi</label>
-                            <input type="text" name="client_name" required placeholder="Contoh: Dinas Kesehatan" class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-900 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none shadow-sm">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Klien</label>
+                            <input type="text" name="client_name" required class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-900 focus:border-indigo-500 outline-none">
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">No. WhatsApp Klien</label>
-                            <input type="text" name="client_phone" placeholder="Contoh: 0812XXXXXXXX" class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-900 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none shadow-sm">
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">No. WhatsApp</label>
+                            <input type="text" name="client_phone" class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-900 focus:border-indigo-500 outline-none">
                         </div>
                     </div>
                 </div>
@@ -194,20 +209,16 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Project Leader (PIC)</label>
-                        <select name="pic_id" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none cursor-pointer">
+                        <select name="pic_id" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
                             <option value="">-- Pilih Penanggung Jawab --</option>
-                            @foreach($team as $member)
-                                <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->roles->pluck('name')->first() }})</option>
-                            @endforeach
+                            @foreach($team as $member) <option value="{{ $member->id }}">{{ $member->name }}</option> @endforeach
                         </select>
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Finder (Target KPI)</label>
-                        <select name="finder_id" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none cursor-pointer">
+                        <select name="finder_id" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
                             <option value="">-- Siapa Pencari Klien Ini? --</option>
-                            @foreach($team as $member)
-                                <option value="{{ $member->id }}">{{ $member->name }}</option>
-                            @endforeach
+                            @foreach($team as $member) <option value="{{ $member->id }}">{{ $member->name }}</option> @endforeach
                         </select>
                     </div>
                 </div>
@@ -215,36 +226,102 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nilai Kontrak (Rp)</label>
-                        <div class="relative">
-                            <span class="absolute left-5 top-3.5 text-gray-400 font-extrabold text-sm">Rp</span>
-                            <input type="number" name="total_price" required placeholder="0" class="block w-full rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none">
-                        </div>
+                        <input type="number" name="total_price" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nominal DP Awal (Rp)</label>
-                        <div class="relative">
-                            <span class="absolute left-5 top-3.5 text-gray-400 font-extrabold text-sm">Rp</span>
-                            <input type="number" name="dp_amount" required placeholder="0" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none">
-                        </div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">DP Awal (Rp)</label>
+                        <input type="number" name="dp_amount" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Timeline Mulai</label>
-                        <input type="date" name="start_date" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none cursor-pointer">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Mulai</label>
+                        <input type="date" name="start_date" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Timeline Deadline</label>
-                        <input type="date" name="deadline" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none cursor-pointer">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Deadline</label>
+                        <input type="date" name="deadline" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-gray-900 hover:bg-black text-white rounded-2xl py-4 font-extrabold text-sm transition-all duration-300 mt-6 shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 cursor-pointer">
-                    Mulai Kerjakan Proyek &rarr;
-                </button>
+                <button type="submit" class="w-full bg-gray-900 text-white rounded-2xl py-4 font-extrabold text-sm transition-all duration-300 mt-6 shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:-translate-y-0.5">Mulai Kerjakan Proyek &rarr;</button>
             </form>
             @endif
+        </div>
+    </div>
+
+    {{-- MODAL EDIT PROJECT --}}
+    <div x-cloak x-show="openEditModal" class="fixed inset-0 z-[100] overflow-y-auto flex items-center justify-center p-4 sm:p-6">
+        <div x-show="openEditModal" x-transition.opacity.duration.300ms class="fixed inset-0 bg-gray-900/60 backdrop-blur-md" @click="openEditModal = false"></div>
+        <div x-show="openEditModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative z-[101] bg-white rounded-[2.5rem] p-8 shadow-[0_30px_60px_rgba(0,0,0,0.25)] w-full max-w-3xl border border-gray-100 max-h-[90vh] overflow-y-auto" style="scrollbar-width: thin;">
+            
+            <div class="flex justify-between items-start pb-6 border-b border-gray-100 mb-6 sticky top-0 bg-white z-10">
+                <div>
+                    <h3 class="text-2xl font-extrabold text-gray-900 tracking-tight">Edit Proyek Aktif</h3>
+                    <p class="text-sm text-gray-500 font-medium mt-1">Perbarui detail operasional dan timeline proyek.</p>
+                </div>
+                <button type="button" @click="openEditModal = false" class="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 flex items-center justify-center transition-colors cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form :action="editUrl" method="POST" class="space-y-6">
+                @csrf
+                @method('PUT')
+                <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Proyek</label>
+                        <input type="text" name="name" x-model="form.name" required class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:border-indigo-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Klien</label>
+                            <input type="text" name="client_name" x-model="form.client_name" required class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-900 focus:border-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">No. WhatsApp</label>
+                            <input type="text" name="client_phone" x-model="form.client_phone" class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-900 focus:border-indigo-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Project Leader (PIC)</label>
+                        <select name="pic_id" x-model="form.pic_id" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
+                            @foreach($team as $member) <option value="{{ $member->id }}">{{ $member->name }}</option> @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Finder</label>
+                        <select name="finder_id" x-model="form.finder_id" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
+                            @foreach($team as $member) <option value="{{ $member->id }}">{{ $member->name }}</option> @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Total Nilai Kontrak (Rp)</label>
+                        <input type="number" name="total_price" x-model="form.total_price" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
+                    </div>
+                    {{-- DP Input dihilangkan untuk keamanan pembukuan. --}}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Timeline Mulai</label>
+                        <input type="date" name="start_date" x-model="form.start_date" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Timeline Deadline</label>
+                        <input type="date" name="deadline" x-model="form.deadline" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl py-4 font-extrabold text-sm transition-all duration-300 mt-6 shadow-[0_8px_20px_rgba(79,70,229,0.25)] hover:-translate-y-0.5">Simpan Perubahan &rarr;</button>
+            </form>
         </div>
     </div>
 
