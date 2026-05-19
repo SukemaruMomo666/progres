@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Livewire\KanbanBoard;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\PerformanceController;
 
 // Halaman utama langsung diarahkan ke login jika belum masuk
 Route::get('/', function () {
@@ -28,6 +29,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:Founder|Co-Founder|HR'])->group(function () {
         Route::get('/finance', [FinanceController::class, 'index'])->name('finance.index');
         Route::post('/finance', [FinanceController::class, 'store'])->name('finance.store');
+        Route::get('/performance', [PerformanceController::class, 'index'])->name('performance.index');
+        Route::post('/performance/close', [PerformanceController::class, 'closePeriod'])->name('performance.close');
     });
     
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

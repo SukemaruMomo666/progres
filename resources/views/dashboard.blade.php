@@ -45,6 +45,9 @@
             
             @role('Founder|Co-Founder|HR')
             <div class="flex items-center gap-3">
+                <a href="{{ route('performance.index') }}" class="border border-gray-200 hover:border-black bg-white text-gray-700 px-5 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+                    Evaluasi & KPI Tim 🎯
+                </a>
                 <a href="{{ route('finance.index') }}" class="border border-gray-200 hover:border-black bg-white text-gray-700 px-5 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-2">
                     Lihat Keuangan Studio 📊
                 </a>
@@ -115,14 +118,15 @@
                         <input type="text" name="name" required placeholder="Contoh: Aplikasi RADAR" class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Pilih Klien</label>
-                        <select name="client_id" required class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
-                            <option value="">-- Pilih Klien Pemilik Proyek --</option>
-                            @foreach($clients as $c)
-                                <option value="{{ $c->id }}">{{ $c->name }} ({{ $c->company ?? 'Personal' }})</option>
-                            @endforeach
-                        </select>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nama Klien / Instansi</label>
+                            <input type="text" name="client_name" required placeholder="Contoh: Budi Santoso" class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">No. WhatsApp Klien</label>
+                            <input type="text" name="client_phone" placeholder="Contoh: 0812XXXXXXXX" class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
