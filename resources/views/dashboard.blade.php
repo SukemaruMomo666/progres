@@ -224,7 +224,7 @@
                         <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nominal DP Awal (Rp)</label>
                         <div class="relative">
                             <span class="absolute left-5 top-3.5 text-gray-400 font-extrabold text-sm">Rp</span>
-                            <input type="number" name="dp_amount" value="0" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none">
+                            <input type="number" name="dp_amount" required placeholder="0" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none">
                         </div>
                     </div>
                 </div>
