@@ -28,6 +28,10 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'index'])->name('login');
     Route::post('/login', [LoginController::class, 'authenticate']);
 });
+Route::get('/link-storage', function () {
+    Artisan::call('storage:link');
+    return "Storage link berhasil dibuat!";
+});
 
 /**
  * PROTEKSI AUTH: Gerbang utama seluruh operasional XGrow
@@ -75,4 +79,5 @@ Route::middleware('auth')->group(function () {
 
     // Keluar dari Ekosistem Sistem Kerja
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+    
 });
