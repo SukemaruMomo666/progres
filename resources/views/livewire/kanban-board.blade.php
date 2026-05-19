@@ -80,10 +80,15 @@
         <div class="flex gap-6 h-full min-w-max items-start pb-4">
             
             @foreach([
-                'To Do' => ['tasks' => $tasksToDo, 'bg' => 'bg-slate-50', 'border' => 'border-slate-200/80', 'header' => 'bg-white/70', 'dot' => 'bg-slate-400', 'text' => 'text-slate-700'],
+                'Revision'    => ['tasks' => $tasksRevision, 'bg' => 'bg-rose-50/40', 'border' => 'border-rose-100/70', 'header' => 'bg-rose-50/50', 'dot' => 'bg-rose-500', 'text' => 'text-rose-700'],
+                'To Do'       => ['tasks' => $tasksToDo, 'bg' => 'bg-slate-50', 'border' => 'border-slate-200/80', 'header' => 'bg-white/70', 'dot' => 'bg-slate-400', 'text' => 'text-slate-700'],
                 'In Progress' => ['tasks' => $tasksInProgress, 'bg' => 'bg-blue-50/40', 'border' => 'border-blue-100/70', 'header' => 'bg-blue-50/50', 'dot' => 'bg-blue-500', 'text' => 'text-blue-700'],
-                'Review' => ['tasks' => $tasksReview, 'bg' => 'bg-amber-50/40', 'border' => 'border-amber-100/70', 'header' => 'bg-amber-50/50', 'dot' => 'bg-amber-500', 'text' => 'text-amber-700'],
-                'Done' => ['tasks' => $tasksDone, 'bg' => 'bg-emerald-50/40', 'border' => 'border-emerald-100/70', 'header' => 'bg-emerald-50/50', 'dot' => 'bg-emerald-500', 'text' => 'text-emerald-700']
+                'Review'      => ['tasks' => $tasksReview, 'bg' => 'bg-amber-50/40', 'border' => 'border-amber-100/70', 'header' => 'bg-amber-50/50', 'dot' => 'bg-amber-500', 'text' => 'text-amber-700'],
+                
+                // TAMBAHKAN BLOK INI DI ANTARA REVIEW DAN DONE:
+                
+                
+                'Done'        => ['tasks' => $tasksDone, 'bg' => 'bg-emerald-50/40', 'border' => 'border-emerald-100/70', 'header' => 'bg-emerald-50/50', 'dot' => 'bg-emerald-500', 'text' => 'text-emerald-700']
             ] as $status => $meta)
             
             <div wire:key="col-frame-{{ Str::slug($status) }}" 
