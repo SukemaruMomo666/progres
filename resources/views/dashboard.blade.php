@@ -25,7 +25,7 @@
 
     <x-navbar title="Project Dashboard" />
 
-    <main class="max-w-7xl mx-auto px-8 py-12 relative z-10">
+<main class="max-w-7xl mx-auto px-8 py-12 relative z-10">
         
         <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
             <div>
@@ -33,27 +33,27 @@
                 <p class="text-gray-500 mt-2 font-medium text-sm">Pantau dan kelola seluruh progres operasional studio secara <span class="font-bold text-gray-700">real-time</span>.</p>
             </div>
             
-            @role('Founder|Co-Founder|HR')
             <div class="flex flex-wrap items-center gap-3">
                 <a href="{{ route('admin.users.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
                     <span class="flex items-center gap-2">👥 Anggota Tim</span>
                 </a>
 
-                <a href="{{ route('performance.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                    <span class="flex items-center gap-2">🎯 KPI Tim</span>
-                </a>
-                <a href="{{ route('finance.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                    <span class="flex items-center gap-2">📊 Buku Kas</span>
-                </a>
-                <button type="button" @click="openCreateModal = true" class="relative px-6 py-2.5 bg-gray-900 text-white rounded-2xl font-extrabold text-sm shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 transition-all duration-300 group overflow-hidden cursor-pointer">
-                    <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                    <span class="relative z-10 flex items-center gap-2">
-                        <span class="text-lg leading-none">+</span> New Project
-                    </span>
-                </button>
+                @role('Founder|Co-Founder|HR')
+                    <a href="{{ route('performance.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                        <span class="flex items-center gap-2">🎯 KPI Tim</span>
+                    </a>
+                    <a href="{{ route('finance.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                        <span class="flex items-center gap-2">📊 Buku Kas</span>
+                    </a>
+                    <button type="button" @click="openCreateModal = true" class="relative px-6 py-2.5 bg-gray-900 text-white rounded-2xl font-extrabold text-sm shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 transition-all duration-300 group overflow-hidden cursor-pointer">
+                        <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                        <span class="relative z-10 flex items-center gap-2"><span class="text-lg leading-none">+</span> New Project</span>
+                    </button>
+                @endrole
             </div>
-            @endrole
         </div>
+
+
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @forelse($projects as $project)
