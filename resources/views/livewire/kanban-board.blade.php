@@ -1,5 +1,20 @@
-<div class="h-screen flex flex-col bg-[#F4F7F6] relative overflow-hidden font-sans select-none" 
-     x-data="{ showCreateModal: @entangle('showCreateModal'), showTaskModal: @entangle('showModal') }">
+<div class="h-screen flex flex-col ..." 
+     x-data="{ 
+        showCreateModal: @entangle('showCreateModal'), 
+        showTaskModal: @entangle('showModal'),
+        showImageModal: false, 
+        activeImage: '' 
+     }">
+
+    <div x-cloak x-show="showImageModal" 
+         class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" 
+         x-transition.opacity.duration.300ms 
+         @click.self="showImageModal = false">
+        <button @click="showImageModal = false" class="absolute top-6 right-6 text-white text-4xl">&times;</button>
+        <img :src="activeImage" class="max-h-[90vh] max-w-[90vw] object-contain rounded-2xl shadow-2xl">
+    </div>
+
+
     
     <style>
         .kanban-ghost-placeholder {
@@ -322,7 +337,9 @@
                             @foreach($selectedTask->proofs as $proof)
                                 <div class="rounded-2xl overflow-hidden border border-gray-200 bg-black relative group shadow-xs">
                                     <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-md text-[8px] font-black text-white px-2 py-0.5 rounded-md z-10 tracking-wider">UI RESULT</span>
-                                    <img src="{{ asset('storage/' . $proof->ui_screenshot_path) }}" class="w-full h-28 object-cover opacity-90 group-hover:scale-105 transition-transform duration-300">
+                                    <img src="{{ asset('storage/' . $proof->ui_screenshot_path) }}" 
+     @click.stop="activeImage = '{{ asset('storage/' . $proof->ui_screenshot_path) }}'; showImageModal = true;"
+     class="w-full h-16 object-cover rounded-lg cursor-zoom-in hover:opacity-80 transition-opacity">
                                 </div>
                                 <div class="rounded-2xl overflow-hidden border border-gray-200 bg-black relative group shadow-xs">
                                     <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-md text-[8px] font-black text-white px-2 py-0.5 rounded-md z-10 tracking-wider">GIT REPO PUSH</span>
