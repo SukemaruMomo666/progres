@@ -1,12 +1,5 @@
 <div class="h-screen flex flex-col bg-[#F4F7F6] relative overflow-hidden font-sans select-none" 
-     x-data="{ 
-    showCreateModal: @entangle('showCreateModal'), 
-    showTaskModal: @entangle('showModal'),
-    showImageModal: false, 
-    activeImage: '' 
-}">
-
-
+     x-data="{ showCreateModal: @entangle('showCreateModal'), showTaskModal: @entangle('showModal') }">
     
     <style>
         .kanban-ghost-placeholder {
