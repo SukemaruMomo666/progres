@@ -10,7 +10,6 @@
     @livewireStyles
     <style> 
         body { font-family: 'Plus Jakarta Sans', sans-serif; } 
-        /* Custom Scrollbar Premium */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
@@ -48,26 +47,62 @@
                 <p class="text-gray-500 mt-2 font-medium text-sm">Pantau dan kelola seluruh progres operasional studio secara <span class="font-bold text-gray-700">real-time</span>.</p>
             </div>
             
-            <div class="flex flex-wrap items-center gap-3">
-                <a href="{{ route('admin.users.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                    <span class="flex items-center gap-2">👥 Anggota Tim</span>
-                </a>
-
-                @role('Founder|Co-Founder|HR')
-                    <a href="{{ route('performance.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                        <span class="flex items-center gap-2">🎯 KPI Tim</span>
-                    </a>
-                    <a href="{{ route('finance.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
-                        <span class="flex items-center gap-2">📊 Buku Kas</span>
-                    </a>
-                    <button type="button" @click="openCreateModal = true" class="relative px-6 py-2.5 bg-gray-900 text-white rounded-2xl font-extrabold text-sm shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 transition-all duration-300 group overflow-hidden cursor-pointer">
-                        <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                        <span class="relative z-10 flex items-center gap-2"><span class="text-lg leading-none">+</span> New Project</span>
+            <div class="flex flex-wrap items-center gap-4">
+                
+                {{-- DROPDOWN MENU ESTETIK --}}
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" @click.away="open = false" type="button" class="group px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 cursor-pointer">
+                        ⚙️ Management
+                        <svg :class="{'rotate-180': open}" class="w-4 h-4 text-gray-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
+
+                    <div x-cloak x-show="open" 
+                         x-transition:enter="transition ease-out duration-200" 
+                         x-transition:enter-start="opacity-0 translate-y-2 scale-95" 
+                         x-transition:enter-end="opacity-100 translate-y-0 scale-100" 
+                         x-transition:leave="transition ease-in duration-150" 
+                         x-transition:leave-start="opacity-100 translate-y-0 scale-100" 
+                         x-transition:leave-end="opacity-0 translate-y-2 scale-95" 
+                         class="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-xl rounded-[1.5rem] border border-gray-100 shadow-[0_10px_40px_rgba(0,0,0,0.08)] py-3 z-50 overflow-hidden origin-top-right">
+                        
+                        <div class="px-5 py-2">
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Workspace</p>
+                        </div>
+                        
+                        <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors">
+                            <span class="text-base">👥</span> Anggota Tim
+                        </a>
+
+                        @role('Founder|Co-Founder|HR')
+                        <div class="my-2 border-t border-gray-100"></div>
+                        <div class="px-5 py-2">
+                            <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Admin Control</p>
+                        </div>
+                        <a href="{{ route('performance.index') }}" class="flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors">
+                            <span class="text-base">🎯</span> KPI Tim
+                        </a>
+                        <a href="{{ route('finance.index') }}" class="flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors">
+                            <span class="text-base">📊</span> Buku Kas
+                        </a>
+                        <a href="{{ route('admin.logs.index') }}" class="flex items-center gap-3 px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-colors">
+                            <span class="text-base">📜</span> Audit Logs
+                        </a>
+                        @endrole
+                    </div>
+                </div>
+
+                {{-- TOMBOL UTAMA NEW PROJECT --}}
+                @role('Founder|Co-Founder|HR')
+                <button type="button" @click="openCreateModal = true" class="relative px-6 py-2.5 bg-gray-900 text-white rounded-2xl font-extrabold text-sm shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 transition-all duration-300 group overflow-hidden cursor-pointer">
+                    <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                    <span class="relative z-10 flex items-center gap-2"><span class="text-lg leading-none">+</span> New Project</span>
+                </button>
                 @endrole
+
             </div>
         </div>
 
+        {{-- LIST PROJECT KANBAN --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @forelse($projects as $project)
                 <div class="group block bg-white/70 backdrop-blur-xl rounded-[2rem] p-7 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-2 hover:bg-white transition-all duration-400 relative overflow-hidden">
@@ -84,7 +119,6 @@
                         <div class="flex items-center gap-2 relative z-20">
                             
                             @role('Founder|Co-Founder|HR')
-                            {{-- TOMBOL EDIT PROYEK --}}
                             <button type="button" @click.prevent="
                                 openEditModal = true;
                                 editUrl = '{{ route('project.update', $project->id) }}';
@@ -100,7 +134,6 @@
                                 <svg class="w-3.5 h-3.5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                             </button>
 
-                            {{-- TOMBOL HAPUS PROYEK --}}
                             <form action="{{ route('project.destroy', $project->id) }}" method="POST" onsubmit="return confirm('⚠️ PERINGATAN: Apakah Anda yakin ingin membuang proyek ini?');" class="m-0">
                                 @csrf
                                 @method('DELETE')
@@ -163,6 +196,8 @@
         </div>
     </main>
 
+    {{-- MODAL CREATE & EDIT TETAP SAMA SEPERTI SEBELUMNYA --}}
+    
     {{-- MODAL CREATE PROJECT --}}
     <div x-cloak x-show="openCreateModal" class="fixed inset-0 z-[100] overflow-y-auto flex items-center justify-center p-4 sm:p-6">
         <div x-show="openCreateModal" x-transition.opacity.duration.300ms class="fixed inset-0 bg-gray-900/60 backdrop-blur-md" @click="openCreateModal = false"></div>
@@ -306,7 +341,6 @@
                         <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Total Nilai Kontrak (Rp)</label>
                         <input type="number" name="total_price" x-model="form.total_price" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 outline-none">
                     </div>
-                    {{-- DP Input dihilangkan untuk keamanan pembukuan. --}}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
