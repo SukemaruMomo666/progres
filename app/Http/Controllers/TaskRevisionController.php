@@ -5,19 +5,48 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Carbon\Carbon; // <-- Wajib dipanggil untuk fitur waktu ajaib
 
 class TaskRevision extends Model
 {
     use HasFactory;
 
     /**
-     * TEKNIK DEWA: Menggunakan $guarded kosong untuk membuka seluruh hak mass assignment.
-     * Langkah ini dijamin 100% meloloskan proses penyimpanan chat/revisi baru ke database.
+     * ZONA AMAN: Menggunakan $fillable adalah standar keamanan tertinggi (Best Practice)
+     * Pastikan nama kolom 'notes' di bawah ini sama dengan yang ada di database kamu 
+     * (bisa diganti jadi 'message' atau 'revision_notes' sesuai struktur migrasimu).
      */
-    protected $guarded = [];
+    protected $fillable = [
+        'task_id',
+        'rejected_by',
+        'notes', 
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESSORS (Fungsi Bantuan Instan untuk Tampilan UI Chat/Revisi)
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Relasi: Mengembalikan catatan diskusi/revisi ini ke Task asalnya
+     * Menyulap format waktu bawaan database menjadi ramah dibaca manusia (Human Readable).
+     * Sangat cocok untuk UI History Chat!
+     * * Cara panggil di Blade: <span class="text-xs">{{ $revision->time_ago }}</span>
+     * Hasilnya: "2 hours ago", "5 minutes ago", dll.
+     */
+    public function getTimeAgoAttribute()
+    {
+        return Carbon::parse($this->created_at)->diffForHumans();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELASI DATABASE
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Relasi: Mengembalikan catatan diskusi/revisi ini ke Task (Kartu Kanban) asalnya
      */
     public function task(): BelongsTo
     {
@@ -25,7 +54,7 @@ class TaskRevision extends Model
     }
 
     /**
-     * Relasi: Mengambil data anggota tim (User) yang mengetik pesan diskusi ini
+     * Relasi: Mengambil data anggota tim (QA / Reviewer) yang memberikan catatan revisi ini
      */
     public function reviewer(): BelongsTo
     {

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Client;
 use App\Models\ActivityLog;
+use App\Models\Period;
+use App\Models\Finance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -24,28 +26,28 @@ class ProjectController extends Controller
      */
     public function store(Request $request)
     {
-        // Validasi input operasional proyek
+        // Validasi input operasional proyek dengan proteksi tanggal logis
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
             'client_name'   => 'required|string|max:255',
             'client_phone'  => 'nullable|string|max:20',
             'pic_id'        => 'required|exists:users,id',
             'finder_id'     => 'required|exists:users,id',
-            'total_price'   => 'required|numeric',
-            'dp_amount'     => 'required|numeric',
+            'total_price'   => 'required|numeric|min:0',
+            'dp_amount'     => 'required|numeric|min:0',
             'start_date'    => 'required|date',
-            'deadline'      => 'required|date',
+            'deadline'      => 'required|date|after_or_equal:start_date', // Mencegah deadline minus
         ]);
 
         DB::transaction(function () use ($validated) {
-            // 1. Buat Klien Baru
-            $client = Client::create([
-                'name'  => $validated['client_name'],
-                'phone' => $validated['client_phone'],
-            ]);
+            // 1. Buat Klien Baru (Atau update jika sudah ada)
+            $client = Client::firstOrCreate(
+                ['name'  => $validated['client_name']],
+                ['phone' => $validated['client_phone']]
+            );
 
             // 2. Ambil periode aktif kuartal kerja
-            $period = \App\Models\Period::where('is_active', true)->firstOrFail();
+            $period = Period::where('is_active', true)->firstOrFail();
 
             // 3. Simpan Proyek Baru
             $project = Project::create([
@@ -65,12 +67,15 @@ class ProjectController extends Controller
 
             // 4. Otomatis Catat DP ke Buku Kas Keuangan jika nominal > 0
             if ($validated['dp_amount'] > 0) {
-                \App\Models\Finance::create([
-                    'project_id'  => $project->id,
-                    'amount'      => $validated['dp_amount'],
-                    'type'        => 'Income',
-                    'notes'       => "DP Awal untuk proyek: " . $validated['name'],
-                    'recorded_by' => auth()->id(),
+                Finance::create([
+                    'period_id'        => $period->id,
+                    'project_id'       => $project->id,
+                    'amount'           => $validated['dp_amount'],
+                    'type'             => 'Income',
+                    'category'         => 'DP Awal Proyek',
+                    'description'      => "DP Awal untuk proyek: " . $validated['name'],
+                    'recorded_by'      => auth()->id(),
+                    'transaction_date' => now(),
                 ]);
             }
 
@@ -108,9 +113,9 @@ class ProjectController extends Controller
             'client_phone'  => 'nullable|string|max:20',
             'pic_id'        => 'required|exists:users,id',
             'finder_id'     => 'required|exists:users,id',
-            'total_price'   => 'required|numeric',
+            'total_price'   => 'required|numeric|min:0',
             'start_date'    => 'required|date',
-            'deadline'      => 'required|date',
+            'deadline'      => 'required|date|after_or_equal:start_date',
         ]);
 
         $project = Project::findOrFail($id);
@@ -164,9 +169,8 @@ class ProjectController extends Controller
             );
 
             // 2. Hapus bersih data riwayat keuangan terkait agar pembukuan kas kembali seimbang
-            if ($project->finances()) {
-                $project->finances()->delete();
-            }
+            // Perbaikan logika dari if ($project->finances()) menjadi perintah eksekusi langsung
+            $project->finances()->delete();
 
             // 3. Hapus proyek utama (Mendukung SoftDeletes)
             $project->delete();

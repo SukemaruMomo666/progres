@@ -7,6 +7,7 @@ use App\Models\Period;
 use App\Models\Client;
 use App\Models\User;
 use App\Models\Finance;
+use App\Models\ActivityLog; // <-- Jangan lupa panggil model ActivityLog
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -117,12 +118,18 @@ class DashboardController extends Controller
                         'transaction_date' => now(), 
                     ]);
                 }
+
+                // D. JEJAK DIGITAL: Catat Log Inisiasi Proyek
+                ActivityLog::record(
+                    'Inisiasi Proyek (Dashboard)', 
+                    "Membuat proyek baru '{$project->name}' untuk klien '{$client->name}' dengan nilai kontrak Rp " . number_format($request->total_price, 0, ',', '.')
+                );
             });
 
             return redirect()->route('dashboard')->with('success', 'Proyek berhasil diinisiasi dan DP tercatat otomatis!');
 
         } catch (\Exception $e) {
-            // Catat log error jika sistem gagal menyimpan
+            // Catat log error sistem (Log bawaan Laravel untuk error developer, bukan ActivityLog)
             Log::error('Gagal inisiasi proyek XGrow: ' . $e->getMessage());
             
             return back()->withErrors('Gagal menyimpan proyek. Terjadi kesalahan pada sistem database.');

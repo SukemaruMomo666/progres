@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\ActivityLog; // <-- Wajib untuk Audit Log
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB; // <-- Wajib untuk Keamanan Database
 use Illuminate\Validation\Rules\Password;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +20,7 @@ class UserController extends Controller
     {
         $users = User::with('roles')->orderBy('created_at', 'desc')->get();
         $roles = Role::all();
+        
         return view('admin.users.index', compact('users', 'roles'));
     }
 
@@ -30,21 +33,29 @@ class UserController extends Controller
         if (!auth()->user()->hasRole(['Founder', 'Co-Founder', 'HR'])) abort(403);
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users,email',
             'password' => ['required', Password::min(8)->letters()->numbers()],
-            'role' => 'required|exists:roles,name',
+            'role'     => 'required|exists:roles,name',
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        DB::transaction(function () use ($request) {
+            $user = User::create([
+                'name'     => $request->name,
+                'email'    => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
 
-        $user->assignRole($request->role);
+            $user->assignRole($request->role);
 
-        return back()->with('success', "Anggota tim {$user->name} berhasil didaftarkan!");
+            // JEJAK DIGITAL: Catat pembuatan akun baru
+            ActivityLog::record(
+                'Registrasi Tim', 
+                "Mendaftarkan anggota tim baru bernama '{$user->name}' dengan hak akses {$request->role}."
+            );
+        });
+
+        return back()->with('success', "Anggota tim baru berhasil didaftarkan!");
     }
 
     /**
@@ -67,12 +78,21 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
         ]);
 
-        $user->update($validated);
+        DB::transaction(function () use ($user, $validated, $isAdmin, $request) {
+            $oldName = $user->name;
+            $user->update($validated);
 
-        // Hanya Admin yang bisa mengubah Role
-        if ($isAdmin && $request->has('role')) {
-            $user->syncRoles([$request->role]);
-        }
+            $logPesan = "Memperbarui data profil pengguna: {$oldName}.";
+
+            // Hanya Admin yang bisa mengubah Role secara bersamaan saat edit profil
+            if ($isAdmin && $request->has('role')) {
+                $user->syncRoles([$request->role]);
+                $logPesan = "Memperbarui profil {$oldName} sekaligus mengatur perannya menjadi {$request->role}.";
+            }
+
+            // JEJAK DIGITAL: Catat pembaruan profil
+            ActivityLog::record('Edit Profil', $logPesan);
+        });
 
         return redirect()->route('admin.users.index')->with('success', 'Profil pengguna berhasil diperbarui.');
     }
@@ -91,7 +111,15 @@ class UserController extends Controller
             return back()->withErrors('Demi keamanan, Anda tidak bisa mencabut peran Founder dari akun Anda sendiri.');
         }
 
+        $oldRole = $user->roles->first()->name ?? 'Tidak Punya Role';
         $user->syncRoles($request->role);
+
+        // JEJAK DIGITAL: Catat perubahan wewenang
+        ActivityLog::record(
+            'Ubah Otoritas (Role)', 
+            "Mengubah hak akses {$user->name} dari '{$oldRole}' menjadi '{$request->role}'."
+        );
+
         return back()->with('success', "Peran {$user->name} diperbarui menjadi {$request->role}.");
     }
 
@@ -105,12 +133,20 @@ class UserController extends Controller
 
         // Proteksi: Staff tidak boleh reset punya orang lain
         if (auth()->id() !== (int)$id && !$isAdmin) {
-            abort(403, 'Anda tidak diizinkan mereset password orang lain.');
+            abort(403, 'Anda tidak diizinkan mereset sandi orang lain.');
         }
 
         $request->validate(['password' => ['required', 'confirmed', Password::min(8)]]);
 
         $user->update(['password' => Hash::make($request->password)]);
+
+        // JEJAK DIGITAL: Cek apakah user ubah sendiri atau diubah oleh Admin
+        $actor = (auth()->id() === (int)$id) ? "sendiri" : "oleh Admin/HR";
+        
+        ActivityLog::record(
+            'Reset Password', 
+            "Sandi untuk akun {$user->name} telah direset {$actor}."
+        );
 
         return back()->with('success', "Sandi {$user->name} berhasil direset.");
     }
@@ -129,7 +165,15 @@ class UserController extends Controller
             return back()->withErrors('Anda tidak bisa menghapus akun Anda sendiri.');
         }
 
+        $userName = $user->name;
         $user->delete();
+
+        // JEJAK DIGITAL: Catat penghapusan akun
+        ActivityLog::record(
+            'Hapus Pengguna', 
+            "Menghapus akun milik {$userName} secara permanen dari sistem."
+        );
+
         return back()->with('success', 'Akun berhasil dihapus.');
     }
 }
