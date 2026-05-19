@@ -8,7 +8,7 @@ use App\Models\Task;
 use App\Models\User;
 use App\Models\TaskProof;
 use App\Models\TaskRevision;
-use App\Models\ActivityLog; // <-- Wajib untuk Audit Log
+use App\Models\ActivityLog;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,8 +18,6 @@ class KanbanBoard extends Component
     use WithFileUploads;
 
     public Project $project;
-    
-    // Penampung Data 5 Kolom (To Do, In Progress, Review, Revision, Done)
     public $tasksToDo, $tasksInProgress, $tasksReview, $tasksRevision, $tasksDone;
 
     public $searchQuery = '';
@@ -57,7 +55,6 @@ class KanbanBoard extends Component
 
         $tasks = $query->get();
         
-        // Memasukkan Revision ke dalam loadTasks agar UI tidak kehilangan data
         $this->tasksToDo = $tasks->where('status', 'To Do');
         $this->tasksInProgress = $tasks->where('status', 'In Progress');
         $this->tasksReview = $tasks->where('status', 'Review');
@@ -74,6 +71,7 @@ class KanbanBoard extends Component
             ->get()->map(function($item) {
                 return [
                     'sender_name' => $item->developer->name ?? 'Developer',
+                    'sender_id'   => $item->submitted_by, // FIXED: Sender ID harus ada untuk Blade
                     'message'     => $item->dev_notes,
                     'created_at'  => $item->created_at,
                 ];
@@ -83,7 +81,8 @@ class KanbanBoard extends Component
             ->get()->map(function($item) {
                 return [
                     'sender_name' => $item->reviewer->name ?? 'PM',
-                    'message'     => $item->reason,
+                    'sender_id'   => $item->rejected_by, // FIXED: Sender ID harus ada untuk Blade
+                    'message'     => $item->reason,      // Menggunakan 'reason' sesuai database
                     'created_at'  => $item->created_at,
                 ];
             });
@@ -111,7 +110,6 @@ class KanbanBoard extends Component
                 'assigned_to' => $this->newTaskAssignee ?: null,
                 'status'      => 'To Do',
             ]);
-
             ActivityLog::record('Tambah Tugas', "Membuat tugas baru: '{$task->title}' pada proyek '{$this->project->name}'.");
         });
 
@@ -126,37 +124,29 @@ class KanbanBoard extends Component
         if ($task) {
             $oldStatus = $task->status;
             $task->update(['status' => $newStatus]);
-            
             ActivityLog::record('Update Status', "Tugas '{$task->title}' dipindah dari {$oldStatus} ke {$newStatus}.");
-            
             $this->loadTasks();
-            if ($this->selectedTask && $this->selectedTask->id == $taskId) {
-                $this->selectedTask = $task;
-            }
+            if ($this->selectedTask && $this->selectedTask->id == $taskId) $this->selectedTask = $task;
         }
     }
 
     public function submitProof()
     {
-        $this->validate([
-            'uiScreenshot' => 'required|image|max:2048', 
-            'repoPush'     => 'required|image|max:2048',
-        ]);
+        $this->validate(['uiScreenshot' => 'required|image|max:2048', 'repoPush' => 'required|image|max:2048']);
 
         DB::transaction(function () {
             $uiPath = $this->uiScreenshot->store('proofs/ui', 'public');
             $repoPath = $this->repoPush->store('proofs/repo', 'public');
 
             TaskProof::create([
-                'task_id' => $this->selectedTask->id,
-                'submitted_by' => Auth::id(),
+                'task_id'            => $this->selectedTask->id,
+                'submitted_by'       => Auth::id(),
                 'ui_screenshot_path' => $uiPath,
-                'repo_push_path' => $repoPath,
-                'dev_notes' => 'Mengirim bukti pengerjaan.'
+                'repo_push_path'     => $repoPath,
+                'dev_notes'          => 'Mengirim bukti pengerjaan.'
             ]);
 
             $this->selectedTask->update(['status' => 'Review']);
-            
             ActivityLog::record('Serah Terima Tugas', "Developer menyerahkan bukti pengerjaan untuk tugas '{$this->selectedTask->title}'.");
         });
 
@@ -172,11 +162,10 @@ class KanbanBoard extends Component
 
         DB::transaction(function () {
             TaskRevision::create([
-                'task_id' => $this->selectedTask->id,
+                'task_id'     => $this->selectedTask->id,
                 'rejected_by' => Auth::id(),
-                'reason' => $this->newComment
+                'reason'      => $this->newComment // Sesuai DB Dump
             ]);
-
             ActivityLog::record('Diskusi Revisi', "Menambah catatan revisi pada tugas '{$this->selectedTask->title}'.");
         });
 
@@ -190,9 +179,7 @@ class KanbanBoard extends Component
         if ($task) {
             $taskTitle = $task->title;
             $task->delete();
-            
             ActivityLog::record('Hapus Tugas', "Tugas '{$taskTitle}' telah dihapus dari sistem.");
-            
             $this->showModal = false;
             $this->loadTasks();
         }
