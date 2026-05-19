@@ -11,6 +11,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Artisan;
 
+
 // Redirect root ke login
 Route::get('/', fn() => redirect()->route('login'));
 
@@ -50,6 +51,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
         Route::patch('/users-management/{id}/role', [UserController::class, 'updateRole'])->name('admin.users.update-role');
         Route::put('/projects/{project}', [ProjectController::class, 'update'])->name('project.update');
+
+        Route::get('/activity-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('admin.logs.index');
 
         // Modul Keuangan & Performa
         Route::get('/finance', [FinanceController::class, 'index'])->name('finance.index');

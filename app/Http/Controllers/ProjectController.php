@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\Client;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -11,11 +12,19 @@ use Illuminate\Support\Facades\DB;
 class ProjectController extends Controller
 {
     /**
-     * Store a newly created resource in storage.
+     * Menampilkan Halaman Utama Dashboard
+     */
+    public function index() 
+    { 
+        return view('dashboard'); 
+    }
+
+    /**
+     * Menginisiasi dan Menyimpan Proyek Baru (Hanya Admin)
      */
     public function store(Request $request)
     {
-        // Validasi input
+        // Validasi input operasional proyek
         $validated = $request->validate([
             'name'          => 'required|string|max:255',
             'client_name'   => 'required|string|max:255',
@@ -35,7 +44,7 @@ class ProjectController extends Controller
                 'phone' => $validated['client_phone'],
             ]);
 
-            // 2. Ambil periode aktif
+            // 2. Ambil periode aktif kuartal kerja
             $period = \App\Models\Period::where('is_active', true)->firstOrFail();
 
             // 3. Simpan Proyek Baru
@@ -54,7 +63,7 @@ class ProjectController extends Controller
                 'status'         => 'Planning',
             ]);
 
-            // 4. Otomatis Catat DP ke Keuangan jika nominal DP lebih besar dari 0
+            // 4. Otomatis Catat DP ke Buku Kas Keuangan jika nominal > 0
             if ($validated['dp_amount'] > 0) {
                 \App\Models\Finance::create([
                     'project_id'  => $project->id,
@@ -64,13 +73,27 @@ class ProjectController extends Controller
                     'recorded_by' => auth()->id(),
                 ]);
             }
+
+            // 5. JEJAK DIGITAL: Catat Log Inisiasi Proyek
+            ActivityLog::record(
+                'Inisiasi Proyek', 
+                "Berhasil meresmikan proyek baru '{$project->name}' untuk klien '{$validated['client_name']}' dengan DP awal Rp " . number_format($validated['dp_amount'], 0, ',', '.')
+            );
         });
 
         return redirect()->route('dashboard')->with('success', 'Proyek berhasil diinisiasi.');
     }
 
     /**
-     * Update the specified resource in storage.
+     * Menampilkan Detail Spesifik Papan Kanban Proyek
+     */
+    public function show(Project $project) 
+    { 
+        return view('projects.show', compact('project')); 
+    }
+
+    /**
+     * Memperbarui Parameter Operasional Proyek Aktif (Hanya Admin)
      */
     public function update(Request $request, $id)
     {
@@ -101,7 +124,7 @@ class ProjectController extends Controller
                 ]);
             }
 
-            // 2. Update Data Proyek (Tidak menyentuh DP agar riwayat finance aman)
+            // 2. Update Detail Data Proyek (Tanpa menyentuh DP awal)
             $project->update([
                 'name'        => $validated['name'],
                 'pic_id'      => $validated['pic_id'],
@@ -110,13 +133,19 @@ class ProjectController extends Controller
                 'start_date'  => $validated['start_date'],
                 'deadline'    => $validated['deadline'],
             ]);
+
+            // 3. JEJAK DIGITAL: Catat Log Pembaruan Detail Proyek
+            ActivityLog::record(
+                'Pembaruan Proyek', 
+                "Mengubah detail parameter operasional pada proyek '{$project->name}'."
+            );
         });
 
         return redirect()->route('dashboard')->with('success', 'Detail operasional proyek berhasil diperbarui.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Menghapus Proyek dan Sinkronisasi Kas Keuangan (Hanya Admin)
      */
     public function destroy($id)
     {
@@ -125,30 +154,24 @@ class ProjectController extends Controller
             abort(403, 'Anda tidak memiliki otoritas untuk menghapus data proyek.');
         }
 
-        // Mencari proyek berdasarkan ID
         $project = Project::findOrFail($id);
         
         DB::transaction(function () use ($project) {
-            // Hapus total semua data keuangan yang terikat dengan proyek ini 
-            // sehingga pembukuan di page finance ikut bersih tanpa perlu cek kolom 'status'
+            // 1. JEJAK DIGITAL: Catat Log Penghapusan SEBELUM data dihapus dari database
+            ActivityLog::record(
+                'Penghapusan Proyek', 
+                "Menghapus proyek '{$project->name}' secara permanen dan membatalkan seluruh transaksi keuangan terkait dari Buku Kas."
+            );
+
+            // 2. Hapus bersih data riwayat keuangan terkait agar pembukuan kas kembali seimbang
             if ($project->finances()) {
                 $project->finances()->delete();
             }
 
-            // Hapus proyek utama (SoftDelete bekerja jika model menggunakan SoftDeletes)
+            // 3. Hapus proyek utama (Mendukung SoftDeletes)
             $project->delete();
         });
 
         return redirect()->route('dashboard')->with('success', 'Proyek beserta seluruh riwayat keuangan terkait berhasil dihapus dari sistem.');
-    }
-
-    public function index() 
-    { 
-        return view('dashboard'); 
-    }
-
-    public function show(Project $project) 
-    { 
-        return view('projects.show', compact('project')); 
     }
 }
