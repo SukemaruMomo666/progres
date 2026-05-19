@@ -8,6 +8,7 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\TaskProofController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ProjectController;
 
 /*
 |--------------------------------------------------------------------------
@@ -65,6 +66,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/users-management/{id}/password', [UserController::class, 'resetPassword'])->name('admin.users.reset-password');
     });
     
+    Route::delete('/projects/{project}', [ProjectController::class, 'destroy'])->name('project.destroy');
+
     // Keluar dari Ekosistem Sistem Kerja
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 });

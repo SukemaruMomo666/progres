@@ -57,52 +57,70 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @forelse($projects as $project)
-                <a href="{{ route('project.board', $project->id) }}" class="group block bg-white/70 backdrop-blur-xl rounded-[2rem] p-7 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-2 hover:bg-white transition-all duration-400 relative overflow-hidden">
+                <div class="group block bg-white/70 backdrop-blur-xl rounded-[2rem] p-7 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-2 hover:bg-white transition-all duration-400 relative overflow-hidden">
                     
+                    <a href="{{ route('project.board', $project->id) }}" class="absolute inset-0 z-0"></a>
+
                     <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-gray-100 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10"></div>
 
                     <div class="flex justify-between items-start mb-6">
-                        <span class="bg-gray-100/80 text-gray-700 text-[10px] px-3 py-1.5 rounded-lg font-extrabold uppercase tracking-widest border border-gray-200/50 shadow-sm">
+                        <span class="bg-gray-100/80 text-gray-700 text-[10px] px-3 py-1.5 rounded-lg font-extrabold uppercase tracking-widest border border-gray-200/50 shadow-sm relative z-10 pointer-events-none">
                             {{ $project->status }}
                         </span>
-                        <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 border border-gray-200 group-hover:translate-x-1">
-                            <span class="text-gray-900 font-bold">&rarr;</span>
-                        </div>
-                    </div>
-                    
-                    <h3 class="text-2xl font-extrabold text-gray-900 group-hover:text-indigo-900 transition-colors mb-1.5 line-clamp-1">
-                        {{ $project->name }}
-                    </h3>
-                    <p class="text-sm font-bold text-gray-500 mb-8 flex items-center gap-1.5">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        {{ $project->client->name ?? 'Internal / R&D' }}
-                    </p>
-                    
-                    <div class="mb-6">
-                        <div class="flex justify-between text-xs mb-2">
-                            <span class="font-extrabold text-gray-400 uppercase tracking-widest text-[10px]">Penyelesaian</span>
-                            <span class="font-extrabold text-gray-900 text-xs">{{ $project->progress }}%</span>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200/50 shadow-inner">
-                            <div class="bg-gradient-to-r from-gray-700 to-black h-full rounded-full transition-all duration-1000 ease-out relative" style="width: {{ $project->progress }}%">
-                                <div class="absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-r from-transparent to-white/20"></div>
-                            </div>
-                        </div>
-                    </div>
+                        
+                        <div class="flex items-center gap-2 relative z-20">
+                            
+                            @role('Founder|Co-Founder|HR')
+                            <form action="{{ route('project.destroy', $project->id) }}" method="POST" onsubmit="return confirm('⚠️ PERINGATAN: Apakah Anda yakin ingin membuang proyek ini? Segala bentuk kartu tugas, histori chat, dan lampiran developer di dalamnya akan ikut terhapus!');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="w-8 h-8 rounded-full bg-white border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer" title="Hapus Proyek Ini">
+                                    <svg class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </form>
+                            @endrole
 
-                    <div class="pt-5 border-t border-gray-100 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-white shadow-md flex items-center justify-center text-xs font-extrabold text-gray-700 relative group-hover:scale-110 transition-transform duration-300">
-                                {{ substr($project->pic->name ?? 'U', 0, 1) }}
-                                <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
-                            </div>
-                            <div>
-                                <p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest leading-none mb-1">Project Leader</p>
-                                <p class="text-xs font-extrabold text-gray-900">{{ explode(' ', $project->pic->name)[0] ?? 'Unassigned' }}</p>
+                            <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 border border-gray-200 group-hover:translate-x-1 pointer-events-none">
+                                <span class="text-gray-900 font-bold">&rarr;</span>
                             </div>
                         </div>
                     </div>
-                </a>
+                    
+                    <div class="relative z-10 pointer-events-none">
+                        <h3 class="text-2xl font-extrabold text-gray-900 group-hover:text-indigo-900 transition-colors mb-1.5 line-clamp-1">
+                            {{ $project->name }}
+                        </h3>
+                        <p class="text-sm font-bold text-gray-500 mb-8 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            {{ $project->client->name ?? 'Internal / R&D' }}
+                        </p>
+                        
+                        <div class="mb-6">
+                            <div class="flex justify-between text-xs mb-2">
+                                <span class="font-extrabold text-gray-400 uppercase tracking-widest text-[10px]">Penyelesaian</span>
+                                <span class="font-extrabold text-gray-900 text-xs">{{ $project->progress }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200/50 shadow-inner">
+                                <div class="bg-gradient-to-r from-gray-700 to-black h-full rounded-full transition-all duration-1000 ease-out relative" style="width: {{ $project->progress }}%">
+                                    <div class="absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-r from-transparent to-white/20"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-5 border-t border-gray-100 flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-white shadow-md flex items-center justify-center text-xs font-extrabold text-gray-700 relative group-hover:scale-110 transition-transform duration-300">
+                                    {{ substr($project->pic->name ?? 'U', 0, 1) }}
+                                    <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest leading-none mb-1">Project Leader</p>
+                                    <p class="text-xs font-extrabold text-gray-900">{{ explode(' ', $project->pic->name)[0] ?? 'Unassigned' }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             @empty
                 <div class="col-span-full bg-white/60 backdrop-blur-md rounded-[2.5rem] p-20 text-center border-2 border-gray-200 border-dashed shadow-sm">
                     <div class="w-24 h-24 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-white">

@@ -22,7 +22,9 @@
             color: #4f46e5;
             letter-spacing: 0.1em;
         }
-        .kanban-chosen-card { opacity: 0.4 !important; }
+        .kanban-chosen-card {
+            opacity: 0.4 !important;
+        }
         .kanban-drag-card {
             transform: scale(1.04) rotate(2deg) !important;
             box-shadow: 0 30px 60px rgba(0,0,0,0.15) !important;
@@ -85,7 +87,7 @@
             ] as $status => $meta)
             
             <div wire:key="col-frame-{{ Str::slug($status) }}" 
-                 class="w-[335px] h-[calc(100vh-175px)] flex flex-col bg-white/50 backdrop-blur-xl rounded-[2.2rem] border {{ $meta['border'] }} shadow-[0_12px_34px_rgba(0,0,0,0.02)] shrink-0 overflow-hidden transition-all duration-300 hover:shadow-[0_12px_34px_rgba(0,0,0,0.05)] hover:bg-white/60">
+                 class="w-[335px] h-[calc(100vh-175px)] flex flex-col bg-white/50 backdrop-blur-xl rounded-[2.2rem] border {{ $meta['border'] }} shadow-[0_12px_34px_rgba(0,0,0,0.02)] shrink-0 overflow-hidden transition-all duration-300">
                 
                 <div class="px-6 py-5 border-b {{ $meta['border'] }} {{ $meta['header'] }} flex justify-between items-center backdrop-blur-sm z-10 shrink-0">
                     <div class="flex items-center gap-3">
@@ -258,7 +260,7 @@
                     </div>
 
                     <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Spesifikasi Lembar Kerja</h4>
-                    <p class="text-xs font-bold text-gray-700 leading-relaxed bg-white border border-gray-100 p-5 rounded-3xl shadow-xs whitespace-pre-wrap mb-6">{{ $selectedTask->description ?? 'Tidak disertakan keterangan pendukung.' }}</p>
+                    <p class="text-xs font-bold text-gray-700 bg-white border p-5 rounded-3xl shadow-xs whitespace-pre-wrap mb-6">{{ $selectedTask->description ?? 'Tidak disertakan keterangan pendukung.' }}</p>
 
                     @if($selectedTask->status === 'Review')
                         @role('Founder|Co-Founder|HR')
@@ -309,7 +311,7 @@
                     @endif
 
                     @if($selectedTask->proofs && $selectedTask->proofs->isNotEmpty())
-                    <div class="space-y-4 pt-2">
+                    <div class="space-y-4 pt-2 mb-6">
                         <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">📁 Berkas Lampiran Hasil Transmisi</h4>
                         <div class="grid grid-cols-2 gap-4">
                             @foreach($selectedTask->proofs as $proof)
@@ -323,6 +325,30 @@
                                 </div>
                             @endforeach
                         </div>
+                    </div>
+                    @endif
+
+                    @php
+                        $canDelete = false;
+                        if(auth()->check()) {
+                            if(auth()->user()->hasRole(['Founder', 'Co-Founder', 'HR'])) {
+                                $canDelete = true;
+                            } elseif($selectedTask->assigned_to === auth()->id()) {
+                                $canDelete = true;
+                            }
+                        }
+                    @endphp
+
+                    @if($canDelete)
+                    <div class="mt-8 pt-6 border-t border-rose-100/60">
+                        <h4 class="text-[10px] font-black text-rose-500 uppercase tracking-widest flex items-center gap-2 mb-3">⚠️ Danger Zone</h4>
+                        <button type="button" 
+                                wire:click="deleteTask({{ $selectedTask->id }})" 
+                                wire:confirm="PERINGATAN: Apakah Anda yakin ingin membuang tugas ini secara permanen? Seluruh histori chat dan file bukti pengerjaan akan ikut terhapus dari sistem."
+                                class="w-full py-3.5 bg-rose-50/50 hover:bg-rose-600 text-rose-600 hover:text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer border border-rose-200 hover:border-rose-600">
+                            <svg class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            Hapus Permanen Tugas Ini
+                        </button>
                     </div>
                     @endif
                 </div>
@@ -396,12 +422,10 @@
             const trackLanes = document.querySelectorAll('.sortable-list');
             
             trackLanes.forEach(lane => {
-                // Hancurkan instansi duplikasi lama guna mencegah kebocoran RAM browser
                 if(lane.sortableInstance) { 
                     lane.sortableInstance.destroy(); 
                 }
                 
-                // Konfigurasi mekanik drag-and-drop mutakhir
                 lane.sortableInstance = new Sortable(lane, {
                     group: 'xgrow_kanban_workspace_group',
                     animation: 260,
@@ -429,7 +453,7 @@
                             return;
                         }
                         
-                        // Eksekusi update langsung ke server
+                        // Menembakkan update status langsung menggunakan engine global @this milik Livewire v3
                         @this.updateTaskStatus(taskId, newStatus);
                     }
                 });

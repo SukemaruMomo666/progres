@@ -119,8 +119,21 @@ class KanbanBoard extends Component
     }
 
     /**
-     * Memproses unggah bukti pekerjaan developer secara aman
+     * 🌟 FITUR BARU: Menghapus tugas dari sistem beserta akses otoritasnya
      */
+    public function deleteTask($taskId)
+    {
+        $task = Task::find($taskId);
+        
+        if ($task) {
+            $task->delete(); // Akan dipindah ke tong sampah (Soft Delete) karena ada deleted_at
+            
+            $this->showModal = false;
+            $this->selectedTask = null;
+            $this->loadTasks();
+        }
+    }
+
     public function submitProof()
     {
         $this->validate([
@@ -137,7 +150,7 @@ class KanbanBoard extends Component
         $proof->ui_screenshot_path = $uiPath;
         $proof->repo_push_path = $repoPath;
         $proof->dev_notes = 'Bukti pengerjaan (Screenshot UI & Hasil Push Git) berhasil diserahkan oleh developer.';
-        $proof->save(); //
+        $proof->save(); 
 
         $task = Task::find($this->selectedTask->id);
         if ($task) {
@@ -159,7 +172,7 @@ class KanbanBoard extends Component
         $chat->task_id = $this->selectedTask->id;
         $chat->rejected_by = Auth::id();
         $chat->reason = $this->newComment;
-        $chat->save(); //
+        $chat->save(); 
 
         $this->newComment = '';
         $this->loadDiscussion(); 
@@ -183,22 +196,15 @@ class KanbanBoard extends Component
         $this->showCreateModal = false; 
     }
 
-    /**
-     * 🌟 TEKNIK DEWA ANTI MASS ASSIGNMENT BUGS: 
-     * Memproses pergeseran kartu drag & drop (Maju maupun Mundur Ke Belakang) secara eksplisit.
-     */
     public function updateTaskStatus($taskId, $newStatus)
     {
         $task = Task::find($taskId);
         if ($task) {
-            // Menginjeksi properti objek secara langsung untuk menghancurkan MassAssignmentException
             $task->status = $newStatus;
-            $task->save(); // Sukses tersimpan langsung ke MySQL!
+            $task->save(); 
             
-            // Segarkan data array tampilan board setelah mutasi data berhasil
             $this->loadTasks();
 
-            // SINKRONISASI MODAL: Jika modal detail sedang terbuka untuk kartu ini, perbarui statusnya secara instan
             if ($this->selectedTask && $this->selectedTask->id == $taskId) {
                 $this->selectedTask = Task::with(['assignee', 'proofs'])->find($taskId);
             }
