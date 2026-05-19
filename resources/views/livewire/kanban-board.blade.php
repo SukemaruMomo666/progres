@@ -12,7 +12,7 @@
             opacity: 0.8 !important;
             margin-bottom: 1rem !important;
         }
-        /* Tulisan Indikator Di Dalam Kotak Putus-Putus */
+        /* Tulisan Panduan Drop Here Di Dalam Kotak Putus-Putus */
         .kanban-ghost-placeholder::after {
             content: "📍 LETAKKAN DI SINI";
             position: absolute;
@@ -24,13 +24,13 @@
             color: #4f46e5;
             letter-spacing: 0.1em;
         }
-        /* Efek Transparansi Kartu Asal Saat Sedang Dipegang Kursor */
+        /* Efek Kartu Asal Saat Sedang Dipegang Kursor */
         .kanban-chosen-card {
-            opacity: 0.3 !important;
+            opacity: 0.4 !important;
         }
-        /* Efek Melayang Kartu Menempel Di Ujung Kursor Pengguna */
+        /* Efek Visual Melayang Kartu Menempel Di Ujung Kursor */
         .kanban-drag-card {
-            transform: scale(1.04) rotate(1.5deg) !important;
+            transform: scale(1.04) rotate(2deg) !important;
             box-shadow: 0 30px 60px rgba(0,0,0,0.15) !important;
             background: #ffffff !important;
             border-color: #4f46e5 !important;
@@ -43,7 +43,7 @@
 
     <x-navbar title="Scrumboard Workspace: {{ $project->name }}" />
 
-    <div class="px-6 sm:px-8 py-4 flex flex-wrap justify-between items-center bg-white/40 backdrop-blur-2xl border-b border-gray-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.01)] z-30 relative gap-4 transition-all duration-300">
+    <div class="px-6 sm:px-8 py-4 flex flex-wrap justify-between items-center bg-white/40 backdrop-blur-2xl border-b border-gray-200/60 shadow-sm z-30 relative gap-4 transition-all duration-300">
         
         <div class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <div class="relative w-full sm:w-72 group">
@@ -91,9 +91,9 @@
             ] as $status => $meta)
             
             <div wire:key="col-frame-{{ Str::slug($status) }}" 
-                 class="w-[335px] h-full flex flex-col bg-white/50 backdrop-blur-xl rounded-[2.2rem] border {{ $meta['border'] }} shadow-[0_12px_34px_rgba(0,0,0,0.02)] shrink-0 overflow-hidden transition-all duration-300 hover:shadow-[0_12px_34px_rgba(0,0,0,0.05)] hover:bg-white/60">
+                 class="w-[335px] h-[calc(100vh-175px)] flex flex-col bg-white/50 backdrop-blur-xl rounded-[2.2rem] border {{ $meta['border'] }} shadow-[0_12px_34px_rgba(0,0,0,0.02)] shrink-0 overflow-hidden transition-all duration-300">
                 
-                <div class="px-6 py-5 border-b {{ $meta['border'] }} {{ $meta['header'] }} flex justify-between items-center backdrop-blur-sm z-10">
+                <div class="px-6 py-5 border-b {{ $meta['border'] }} {{ $meta['header'] }} flex justify-between items-center backdrop-blur-sm z-10 shrink-0">
                     <div class="flex items-center gap-3">
                         <span class="w-2.5 h-2.5 rounded-full {{ $meta['dot'] }} shadow-[0_0_12px_rgba(0,0,0,0.15)]"></span>
                         <h3 class="font-black text-gray-900 text-xs tracking-wider uppercase">{{ $status }}</h3>
@@ -104,7 +104,7 @@
                 </div>
 
                 <div wire:ignore 
-                     class="flex-1 overflow-y-auto sortable-list p-5 space-y-4 rounded-b-[2.2rem] min-h-[450px] bg-transparent/5" 
+                     class="flex-1 overflow-y-auto sortable-list pt-5 px-5 pb-24 space-y-4 rounded-b-[2.2rem] min-h-[450px] bg-transparent/5" 
                      data-status="{{ $status }}" 
                      style="scrollbar-width: none;">
                     
@@ -146,7 +146,7 @@
                                             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> WAITING PM
                                         </span>
                                     @elseif($task->status === 'Revision')
-                                        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg shadow-xs bg-rose-50 text-rose-600 border-rose-100/50">
+                                        <span class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg shadow-xs bg-rose-50 text-rose-600 border border-rose-100/50">
                                             <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> REVISI PM
                                         </span>
                                     @else
@@ -264,7 +264,7 @@
                     </div>
 
                     <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Spesifikasi Lembar Kerja</h4>
-                    <p class="text-xs font-bold text-gray-700 leading-relaxed bg-white border border-gray-100 p-5 rounded-3xl shadow-xs whitespace-pre-wrap mb-6">{{ $selectedTask->description ?? 'Tidak disertakan keterangan pendukung.' }}</p>
+                    <p class="text-xs font-bold text-gray-700 bg-white border p-5 rounded-3xl shadow-xs whitespace-pre-wrap mb-6">{{ $selectedTask->description ?? 'Tidak disertakan keterangan pendukung.' }}</p>
 
                     @if($selectedTask->status === 'Review')
                         @role('Founder|Co-Founder|HR')
@@ -402,25 +402,24 @@
             const trackLanes = document.querySelectorAll('.sortable-list');
             
             trackLanes.forEach(lane => {
-                // Hancurkan instansi duplikasi lama guna mencegah kebocoran RAM browser
                 if(lane.sortableInstance) { 
                     lane.sortableInstance.destroy(); 
                 }
                 
-                // Konfigurasi mekanik drag-and-drop mutakhir
+                // Konfigurasi mekanik drag-and-drop mutakhir (Maju Mundur Kebal Bugs)
                 lane.sortableInstance = new Sortable(lane, {
                     group: 'xgrow_kanban_workspace_group',
                     animation: 260,
                     fallbackOnBody: false,
                     swapThreshold: 0.65,
                     invertSwap: true,
-                    emptyInsertThreshold: 20, // Memperlebar jangkauan tangkapan jika kolom kosong melong
-                    ghostClass: 'kanban-ghost-placeholder', // 💥 SUNTIKAN UTAMA: MEMANGGIL KOTAK PUTUS-PUTUS DROPMENU
+                    emptyInsertThreshold: 20, 
+                    ghostClass: 'kanban-ghost-placeholder', // MEMANGGIL KOTAK PUTUS-PUTUS DROPMENU PRESET
                     chosenClass: 'kanban-chosen-card',
                     dragClass: 'kanban-drag-card',
                     
                     onStart: function(evt) {
-                        // Sembunyikan tulisan "Kolom Kosong" bawaan agar tidak mengganggu rendering jalannya kartu
+                        // Sembunyikan tulisan "Kolom Kosong" bawaan agar tidak mengganggu jalannya kartu
                         const placeholder = evt.to.querySelector('.empty-placeholder');
                         if (placeholder) placeholder.style.display = 'none';
                     },
@@ -431,13 +430,12 @@
                         const oldStatus = evt.from.getAttribute('data-status');
                         
                         if (newStatus === oldStatus) {
-                            // Jika dibatalkan atau ditaruh di kolom yang sama, munculkan lagi tulisan kolom kosongnya
                             const placeholder = evt.from.querySelector('.empty-placeholder');
                             if (placeholder && evt.from.children.length <= 1) placeholder.style.display = 'flex';
                             return;
                         }
                         
-                        // 💥 SOLUSI UTAMA: Menggunakan @this langsung milik Blade Compiler untuk memicu fungsi update backend secara instan!
+                        // Menembakkan update status langsung menggunakan engine global @this milik Livewire v3
                         @this.updateTaskStatus(taskId, newStatus);
                     }
                 });

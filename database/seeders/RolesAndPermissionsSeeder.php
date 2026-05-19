@@ -22,7 +22,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // HANYA 1 USER: Akun Utama Founder
         $founder = User::create([
-            'name' => 'Ari Kurtubi',
+            'name' => 'Founder',
             'email' => 'founder@xgrow.com',
             'password' => Hash::make('password'), // Silakan ganti sandi ini nanti
             'created_at' => now(),
