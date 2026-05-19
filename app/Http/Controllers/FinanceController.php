@@ -12,7 +12,6 @@ class FinanceController extends Controller
 {
     public function index()
     {
-        // 1. Ambil periode yang sedang aktif
         $activePeriod = Period::where('is_active', true)->first();
 
         if (!$activePeriod) {
@@ -21,19 +20,36 @@ class FinanceController extends Controller
             ]);
         }
 
-        // 2. Tarik semua transaksi di periode aktif ini
+        // 1. Ambil semua riwayat transaksi kas
         $transactions = Finance::with('project')
             ->where('period_id', $activePeriod->id)
             ->orderBy('transaction_date', 'desc')
             ->get();
 
-        // 3. Logika Hitung Total (Income, Expense, Net Balance)
         $income = $transactions->where('type', 'Income')->sum('amount');
         $expense = $transactions->where('type', 'Expense')->sum('amount');
         $balance = $income - $expense;
 
-        // 4. Ambil daftar proyek untuk pilihan di form modal (DP/Pelunasan)
-        $projects = Project::where('period_id', $activePeriod->id)->get();
+        // 2. LOGIKA DEWA: Hitung Persentase Pembayaran (DP vs Total) untuk setiap Proyek
+        $projects = Project::where('period_id', $activePeriod->id)->get()->map(function($project) use ($transactions) {
+            // Jumlahkan semua uang Pemasukan (DP/Cicilan/Lunas) yang masuk atas nama proyek ini
+            $total_paid = $transactions->where('project_id', $project->id)->where('type', 'Income')->sum('amount');
+            
+            $project->total_paid = $total_paid;
+            $project->remaining_payment = $project->total_price - $total_paid; // Sisa tagihan
+            
+            // Hitung persentase (Hindari pembagian dengan 0)
+            $project->payment_percentage = $project->total_price > 0 
+                ? round(($total_paid / $project->total_price) * 100) 
+                : 0;
+
+            // Auto-update status Lunas di memori jika bayaran sudah 100% atau lebih
+            if ($project->payment_percentage >= 100) {
+                $project->payment_status = 'Fully Paid';
+            }
+
+            return $project;
+        });
 
         return view('finance.index', compact('transactions', 'income', 'expense', 'balance', 'projects', 'activePeriod'));
     }
@@ -62,7 +78,7 @@ class FinanceController extends Controller
             'transaction_date' => $request->transaction_date,
         ]);
 
-        // Logika Dewa Otomatis: Jika transaksi ini adalah DP/Pelunasan Proyek, update status bayar proyeknya
+        // Auto Update Database Status Proyek Jika Lunas/DP
         if ($request->project_id && $request->type === 'Income') {
             $project = Project::find($request->project_id);
             if (str_contains(strtolower($request->category), 'dp')) {

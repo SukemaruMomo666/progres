@@ -2,26 +2,41 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-// Tambahan Wajib
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'email', 'password', 'phone', 'is_active'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, SoftDeletes, HasRoles; // Sisipkan SoftDeletes dan HasRoles di sini
+    /** * Mengaktifkan Fitur Pendukung Pabrikasi Data, Notifikasi, 
+     * Penghapusan Lunak (Soft Delete), dan Hak Akses Spatie
+     */
+    use HasFactory, Notifiable, SoftDeletes, HasRoles;
 
     /**
-     * Get the attributes that should be cast.
+     * ZONA AMAN (Mass Assignment): Daftar kolom yang diizinkan untuk diisi secara massal
+     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'phone',
+        'is_active',
+    ];
+
+    /**
+     * ZONA PRIVASI: Menyembunyikan atribut sensitif saat model dikonversi ke Array atau JSON
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * ZONA CASTING: Otomatisasi konversi tipe data database ke tipe data native PHP/Laravel
      *
      * @return array<string, string>
      */
@@ -30,18 +45,17 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_active' => 'boolean', // Pastikan is_active dibaca sebagai true/false
+            'is_active' => 'boolean', // Memastikan nilai 1/0 di database dibaca sebagai true/false di aplikasi
         ];
     }
 
-    /* 
-    |--------------------------------------------------------------------------
+    /* |--------------------------------------------------------------------------
     | RELASI DATABASE (LOGIKA DEWA)
     |--------------------------------------------------------------------------
     */
 
     /**
-     * Relasi: Proyek di mana user ini menjadi PIC (Penanggung Jawab)
+     * Relasi: Proyek di mana user ini bertindak sebagai PIC (Penanggung Jawab)
      */
     public function projectsAsPic(): HasMany
     {
@@ -49,7 +63,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi: Proyek di mana user ini menjadi Finder (Pencari Mitra / Pencetak KPI)
+     * Relasi: Proyek di mana user ini bertindak sebagai Finder (Pencari Mitra / Kontributor KPI)
      */
     public function projectsAsFinder(): HasMany
     {
@@ -57,7 +71,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi: Task (Kanban) yang ditugaskan ke user ini (sebagai Dev)
+     * Relasi: Task (Kanban Sticky Notes) yang ditugaskan ke user ini (sebagai Developer)
      */
     public function tasksAssigned(): HasMany
     {
@@ -65,7 +79,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi: Task yang sedang diawasi/direview oleh user ini (sebagai QA)
+     * Relasi: Task yang sedang diawasi/ditinjau oleh user ini (sebagai Quality Assurance / PM)
      */
     public function tasksQa(): HasMany
     {
@@ -73,7 +87,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi: Bukti kerja (SS UI & Repo) yang pernah diupload oleh user ini (Dev)
+     * Relasi: Bukti kerja (Screenshot UI & Push Repo) yang diunggah oleh user ini
      */
     public function taskProofs(): HasMany
     {
@@ -81,7 +95,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi: Daftar penolakan/revisi yang pernah dikeluarkan oleh user ini (QA)
+     * Relasi: Daftar instruksi penolakan/revisi tugas yang pernah dikeluarkan oleh user ini
      */
     public function taskRevisions(): HasMany
     {
@@ -89,7 +103,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Relasi: Data keuangan yang dicatat oleh user ini (Founder/Co-Founder/HR)
+     * Relasi: Data kas keuangan yang dicatat/diinput oleh user ini ke dalam Buku Kas
      */
     public function financesRecorded(): HasMany
     {

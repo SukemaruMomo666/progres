@@ -1,65 +1,34 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Models;
 
-use App\Models\TaskRevision;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class TaskRevisionController extends Controller
+class TaskRevision extends Model
 {
+    use HasFactory;
+
     /**
-     * Display a listing of the resource.
+     * TEKNIK DEWA: Menggunakan $guarded kosong untuk membuka seluruh hak mass assignment.
+     * Langkah ini dijamin 100% meloloskan proses penyimpanan chat/revisi baru ke database.
      */
-    public function index()
+    protected $guarded = [];
+
+    /**
+     * Relasi: Mengembalikan catatan diskusi/revisi ini ke Task asalnya
+     */
+    public function task(): BelongsTo
     {
-        //
+        return $this->belongsTo(Task::class, 'task_id');
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Relasi: Mengambil data anggota tim (User) yang mengetik pesan diskusi ini
      */
-    public function create()
+    public function reviewer(): BelongsTo
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(TaskRevision $taskRevision)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(TaskRevision $taskRevision)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, TaskRevision $taskRevision)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(TaskRevision $taskRevision)
-    {
-        //
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 }

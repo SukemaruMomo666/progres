@@ -3,10 +3,12 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use Livewire\WithFileUploads;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use App\Models\TaskProof;
+use App\Models\TaskRevision;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 
 class KanbanBoard extends Component
@@ -15,100 +17,196 @@ class KanbanBoard extends Component
 
     public Project $project;
     
-    // State untuk Modal Detail Task
-    public $selectedTask = null;
-    public $showModal = false;
-    
-    // Form Inputs untuk Bukti Kerja (Dev)
+    // Penampung Data 4 Kolom Utama Papan Board
+    public $tasksToDo, $tasksInProgress, $tasksReview, $tasksDone;
+
+    // Parameter Filter Konten
+    public $searchQuery = '';
+    public $filterPriority = '';
+
+    // Variabel Form Input Data Task Baru & Diskusi
+    public $newTaskTitle, $newTaskPriority = 'Medium', $newTaskAssignee, $newTaskDescription;
+    public $newComment = ''; 
+    public $discussionFeed = []; 
+
+    // Properti Unggah Berkas Digital (Wajib untuk Livewire File Uploads)
     public $uiScreenshot;
     public $repoPush;
-    public $devNotes;
+
+    // State Modal Toggle
+    public $showModal = false;
+    public $showCreateModal = false;
+    public $selectedTask = null;
+
+    public function updatedSearchQuery() { $this->loadTasks(); }
+    public function updatedFilterPriority() { $this->loadTasks(); }
 
     public function mount(Project $project)
     {
         $this->project = $project;
+        $this->loadTasks();
     }
 
-    /**
-     * LOGIKA DEWA: Sinkronisasi Drag & Drop dengan Validasi Ketat
-     */
-    public function updateTaskStatus($taskId, $newStatus)
+    public function loadTasks()
     {
-        $task = Task::find($taskId);
+        // Tarik data tugas tim berdasarkan project id aktif
+        $query = Task::with(['assignee', 'proofs'])->where('project_id', $this->project->id);
+
+        if (!empty($this->searchQuery)) {
+            $query->where('title', 'like', '%' . $this->searchQuery . '%');
+        }
+        if (!empty($this->filterPriority)) {
+            $query->where('priority', $this->filterPriority);
+        }
+
+        $tasks = $query->get();
         
-        if (!$task) return;
-
-        // HARD-BLOCK LOGIC: Dev mau geser ke 'Review' tapi belum upload bukti? Blokir!
-        if ($newStatus === 'Review') {
-            $hasProof = TaskProof::where('task_id', $taskId)->exists();
-            if (!$hasProof) {
-                return; 
-            }
-        }
-
-        // VALIDASI QA: Hanya QA & Founder yang bisa geser kartu ke 'Done'
-        if ($newStatus === 'Done' && !Auth::user()->hasAnyRole(['Founder', 'Co-Founder', 'QA'])) {
-            return;
-        }
-
-        // Jika lolos semua validasi, update status di database
-        $task->update(['status' => $newStatus]);
-        
-        // Rekam timestamp jika selesai
-        if ($newStatus === 'Done') {
-            $task->update(['completed_at' => now()]);
-        }
+        // Memisahkan data tugas ke dalam 4 kolom mandatori
+        $this->tasksToDo = $tasks->where('status', 'To Do');
+        $this->tasksInProgress = $tasks->where('status', 'In Progress');
+        $this->tasksReview = $tasks->where('status', 'Review');
+        $this->tasksDone = $tasks->where('status', 'Done');
     }
 
     /**
-     * Buka Modal Detail & Ambil Data Terkait
+     * Sinkronisasi Data Transmisi Kerja & Revisi Menjadi Feed Obrolan
      */
+    public function loadDiscussion()
+    {
+        if (!$this->selectedTask) return;
+
+        // 1. Ambil catatan penyerahan tugas dari Developer
+        $proofs = TaskProof::where('task_id', $this->selectedTask->id)
+            ->whereNotNull('dev_notes')
+            ->get()
+            ->map(function($item) {
+                $user = User::find($item->submitted_by);
+                return [
+                    'sender_name' => $user->name ?? 'Developer',
+                    'sender_id' => $item->submitted_by,
+                    'message' => $item->dev_notes,
+                    'created_at' => $item->created_at,
+                ];
+            })->toArray();
+
+        // 2. Ambil catatan instruksi perbaikan dari Project Manager
+        $revisions = TaskRevision::where('task_id', $this->selectedTask->id)
+            ->get()
+            ->map(function($item) {
+                $user = User::find($item->rejected_by);
+                return [
+                    'sender_name' => $user->name ?? 'Project Manager',
+                    'sender_id' => $item->rejected_by,
+                    'message' => $item->reason,
+                    'created_at' => $item->created_at,
+                ];
+            })->toArray();
+
+        // 3. Satukan alur data secara kronologis waktu nyata
+        $merged = array_merge($proofs, $revisions);
+        usort($merged, function($a, $b) {
+            return strtotime($a['created_at']) <=> strtotime($b['created_at']);
+        });
+
+        $this->discussionFeed = $merged;
+    }
+
     public function openTaskDetail($taskId)
     {
-        $this->selectedTask = Task::with(['proofs', 'revisions'])->find($taskId);
+        $this->selectedTask = Task::with(['assignee', 'proofs'])->find($taskId);
+        $this->loadDiscussion(); 
         $this->showModal = true;
     }
 
     /**
-     * Simpan Bukti Kerja Developer (SS UI & Repo)
+     * Memproses unggah bukti pekerjaan developer secara aman
      */
     public function submitProof()
     {
         $this->validate([
-            'uiScreenshot' => 'required|image|max:2048', // Max 2MB
+            'uiScreenshot' => 'required|image|max:2048', 
             'repoPush' => 'required|image|max:2048',
-            'devNotes' => 'nullable|string',
         ]);
 
-        // Simpan file ke storage internal xgrow
         $uiPath = $this->uiScreenshot->store('proofs/ui', 'public');
         $repoPath = $this->repoPush->store('proofs/repo', 'public');
 
-        TaskProof::create([
-            'task_id' => $this->selectedTask->id,
-            'submitted_by' => Auth::id(),
-            'ui_screenshot_path' => $uiPath,
-            'repo_push_path' => $repoPath,
-            'dev_notes' => $this->devNotes,
-        ]);
+        $proof = new TaskProof();
+        $proof->task_id = $this->selectedTask->id;
+        $proof->submitted_by = Auth::id();
+        $proof->ui_screenshot_path = $uiPath;
+        $proof->repo_push_path = $repoPath;
+        $proof->dev_notes = 'Bukti pengerjaan (Screenshot UI & Hasil Push Git) berhasil diserahkan oleh developer.';
+        $proof->save(); //
 
-        // Otomatis ubah status ke Review setelah bukti diunggah
-        $this->selectedTask->update(['status' => 'Review']);
+        $task = Task::find($this->selectedTask->id);
+        if ($task) {
+            $task->status = 'Review';
+            $task->save();
+        }
 
-        $this->showModal = false;
-        $this->reset(['uiScreenshot', 'repoPush', 'devNotes']);
+        $this->reset(['uiScreenshot', 'repoPush']);
+        $this->loadTasks();
+        $this->selectedTask = Task::with(['assignee', 'proofs'])->find($task->id);
+        $this->loadDiscussion();
+    }
+
+    public function sendComment()
+    {
+        $this->validate(['newComment' => 'required|string|max:500']);
+
+        $chat = new TaskRevision();
+        $chat->task_id = $this->selectedTask->id;
+        $chat->rejected_by = Auth::id();
+        $chat->reason = $this->newComment;
+        $chat->save(); //
+
+        $this->newComment = '';
+        $this->loadDiscussion(); 
+    }
+
+    public function createTask()
+    {
+        $this->validate(['newTaskTitle' => 'required|string|max:255']);
+
+        $task = new Task();
+        $task->project_id = $this->project->id;
+        $task->title = $this->newTaskTitle;
+        $task->description = $this->newTaskDescription;
+        $task->priority = $this->newTaskPriority;
+        $task->assigned_to = $this->newTaskAssignee ?: null;
+        $task->status = 'To Do';
+        $task->save();
+
+        $this->reset(['newTaskTitle', 'newTaskDescription', 'newTaskAssignee']);
+        $this->loadTasks();
+        $this->showCreateModal = false; 
+    }
+
+    /**
+     * 🌟 TEKNIK DEWA ANTI MASS ASSIGNMENT BUGS: 
+     * Memproses pergeseran kartu drag & drop (Maju maupun Mundur Ke Belakang) secara eksplisit.
+     */
+    public function updateTaskStatus($taskId, $newStatus)
+    {
+        $task = Task::find($taskId);
+        if ($task) {
+            // Menginjeksi properti objek secara langsung untuk menghancurkan MassAssignmentException
+            $task->status = $newStatus;
+            $task->save(); // Sukses tersimpan langsung ke MySQL!
+            
+            // Segarkan data array tampilan board setelah mutasi data berhasil
+            $this->loadTasks();
+
+            // SINKRONISASI MODAL: Jika modal detail sedang terbuka untuk kartu ini, perbarui statusnya secara instan
+            if ($this->selectedTask && $this->selectedTask->id == $taskId) {
+                $this->selectedTask = Task::with(['assignee', 'proofs'])->find($taskId);
+            }
+        }
     }
 
     public function render()
     {
-        $tasks = Task::where('project_id', $this->project->id)->get();
-
-        return view('livewire.kanban-board', [
-            'tasksToDo'         => $tasks->where('status', 'To Do'),
-            'tasksInProgress'   => $tasks->where('status', 'In Progress'),
-            'tasksReview'       => $tasks->where('status', 'Review'),
-            'tasksRevision'     => $tasks->where('status', 'Revision'),
-            'tasksDone'         => $tasks->where('status', 'Done'),
-        ])->layout('components.layouts.app');
+        return view('livewire.kanban-board')->layout('components.layouts.app');
     }
 }

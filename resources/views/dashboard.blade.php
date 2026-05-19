@@ -3,181 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - XGrow Internal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700&display=swap" rel="stylesheet">
+    <title>Dashboard - XGrow Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     @livewireStyles
-    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
+    <style> 
+        body { font-family: 'Plus Jakarta Sans', sans-serif; } 
+        /* Custom Scrollbar Premium */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
-<body class="bg-[#F8F9FA] text-gray-800 antialiased" x-data="{ openCreateModal: false }">
+<body class="bg-[#F4F7F6] text-gray-800 antialiased relative overflow-x-hidden" x-data="{ openCreateModal: false }">
 
-    <nav class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-50">
-        <div class="flex items-center gap-4">
-            <h1 class="text-xl font-bold tracking-tight text-gray-900">XGrow Workspace</h1>
-            @if($activePeriod)
-                <span class="bg-black text-white text-xs px-3 py-1 rounded-full font-medium">
-                    Periode: {{ $activePeriod->name }}
-                </span>
-            @else
-                <span class="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full font-medium">
-                    Tidak ada periode aktif
-                </span>
-            @endif
-        </div>
-        <div class="flex items-center gap-4">
-            <span class="text-sm font-medium text-gray-600">
-                {{ Auth::user()->name }} ({{ Auth::user()->roles->pluck('name')->first() }})
-            </span>
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="text-sm text-red-600 hover:text-red-800 font-semibold transition">Logout</button>
-            </form>
-        </div>
-    </nav>
+    <div class="absolute top-0 left-0 w-full h-[400px] bg-gradient-to-b from-gray-200/60 via-gray-100/30 to-transparent -z-10 pointer-events-none"></div>
+    <div class="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-indigo-100/40 to-transparent blur-3xl -z-10 pointer-events-none"></div>
 
-    <main class="max-w-7xl mx-auto px-8 py-10">
-        <div class="flex justify-between items-end mb-8">
+    <x-navbar title="Project Dashboard" />
+
+    <main class="max-w-7xl mx-auto px-8 py-12 relative z-10">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
             <div>
-                <h2 class="text-3xl font-bold text-gray-900">Active Projects</h2>
-                <p class="text-gray-500 mt-1">Pantau progres proyek berjalan untuk periode ini.</p>
+                <h2 class="text-4xl font-extrabold text-gray-900 tracking-tight">Active Projects</h2>
+                <p class="text-gray-500 mt-2 font-medium text-sm">Pantau dan kelola seluruh progres operasional studio secara <span class="font-bold text-gray-700">real-time</span>.</p>
             </div>
             
             @role('Founder|Co-Founder|HR')
-            <div class="flex items-center gap-3">
-                <a href="{{ route('performance.index') }}" class="border border-gray-200 hover:border-black bg-white text-gray-700 px-5 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-2">
-                    Evaluasi & KPI Tim 🎯
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('admin.users.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                    <span class="flex items-center gap-2">👥 Anggota Tim</span>
                 </a>
-                <a href="{{ route('finance.index') }}" class="border border-gray-200 hover:border-black bg-white text-gray-700 px-5 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-2">
-                    Lihat Keuangan Studio 📊
+
+                <a href="{{ route('performance.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                    <span class="flex items-center gap-2">🎯 KPI Tim</span>
                 </a>
-                <button @click="openCreateModal = true" class="bg-black hover:bg-gray-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition">
-                    + New Project
+                <a href="{{ route('finance.index') }}" class="group relative px-5 py-2.5 bg-white/80 backdrop-blur-md rounded-2xl font-extrabold text-sm text-gray-700 shadow-sm border border-gray-200/80 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300">
+                    <span class="flex items-center gap-2">📊 Buku Kas</span>
+                </a>
+                <button type="button" @click="openCreateModal = true" class="relative px-6 py-2.5 bg-gray-900 text-white rounded-2xl font-extrabold text-sm shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 transition-all duration-300 group overflow-hidden cursor-pointer">
+                    <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                    <span class="relative z-10 flex items-center gap-2">
+                        <span class="text-lg leading-none">+</span> New Project
+                    </span>
                 </button>
             </div>
             @endrole
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @forelse($projects as $project)
-                <a href="{{ route('project.board', $project->id) }}" class="block bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:-translate-y-1 transition duration-300 group">
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="bg-gray-100 text-gray-600 text-xs px-2.5 py-1 rounded-md font-semibold">
+                <a href="{{ route('project.board', $project->id) }}" class="group block bg-white/70 backdrop-blur-xl rounded-[2rem] p-7 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] hover:-translate-y-2 hover:bg-white transition-all duration-400 relative overflow-hidden">
+                    
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-gray-100 to-transparent rounded-bl-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10"></div>
+
+                    <div class="flex justify-between items-start mb-6">
+                        <span class="bg-gray-100/80 text-gray-700 text-[10px] px-3 py-1.5 rounded-lg font-extrabold uppercase tracking-widest border border-gray-200/50 shadow-sm">
                             {{ $project->status }}
                         </span>
+                        <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 border border-gray-200 group-hover:translate-x-1">
+                            <span class="text-gray-900 font-bold">&rarr;</span>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 group-hover:text-black mb-1">
+                    
+                    <h3 class="text-2xl font-extrabold text-gray-900 group-hover:text-indigo-900 transition-colors mb-1.5 line-clamp-1">
                         {{ $project->name }}
                     </h3>
-                    <p class="text-sm text-gray-500 mb-6">Client: {{ $project->client->name ?? 'Internal/N/A' }}</p>
+                    <p class="text-sm font-bold text-gray-500 mb-8 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        {{ $project->client->name ?? 'Internal / R&D' }}
+                    </p>
                     
-                    <div class="mb-4">
-                        <div class="flex justify-between text-sm mb-1.5">
-                            <span class="font-medium text-gray-700">Progress</span>
-                            <span class="font-bold text-black">{{ $project->progress }}%</span>
+                    <div class="mb-6">
+                        <div class="flex justify-between text-xs mb-2">
+                            <span class="font-extrabold text-gray-400 uppercase tracking-widest text-[10px]">Penyelesaian</span>
+                            <span class="font-extrabold text-gray-900 text-xs">{{ $project->progress }}%</span>
                         </div>
-                        <div class="w-full bg-gray-100 rounded-full h-2">
-                            <div class="bg-black h-2 rounded-full transition-all duration-500" style="width: {{ $project->progress }}%"></div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden border border-gray-200/50 shadow-inner">
+                            <div class="bg-gradient-to-r from-gray-700 to-black h-full rounded-full transition-all duration-1000 ease-out relative" style="width: {{ $project->progress }}%">
+                                <div class="absolute top-0 right-0 bottom-0 w-10 bg-gradient-to-r from-transparent to-white/20"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="pt-4 border-t border-gray-100 flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-bold text-gray-600">
+                    <div class="pt-5 border-t border-gray-100 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-white shadow-md flex items-center justify-center text-xs font-extrabold text-gray-700 relative group-hover:scale-110 transition-transform duration-300">
                                 {{ substr($project->pic->name ?? 'U', 0, 1) }}
+                                <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full"></span>
                             </div>
-                            <span class="text-xs font-medium text-gray-500">PIC: {{ explode(' ', $project->pic->name)[0] ?? 'Unassigned' }}</span>
+                            <div>
+                                <p class="text-[9px] font-extrabold text-gray-400 uppercase tracking-widest leading-none mb-1">Project Leader</p>
+                                <p class="text-xs font-extrabold text-gray-900">{{ explode(' ', $project->pic->name)[0] ?? 'Unassigned' }}</p>
+                            </div>
                         </div>
-                        <span class="text-xs font-bold text-black group-hover:underline">Buka Board &rarr;</span>
                     </div>
                 </a>
             @empty
-                <div class="col-span-full bg-white rounded-2xl p-10 text-center border border-gray-100 border-dashed">
-                    <p class="text-gray-500">Belum ada proyek yang berjalan di periode ini.</p>
+                <div class="col-span-full bg-white/60 backdrop-blur-md rounded-[2.5rem] p-20 text-center border-2 border-gray-200 border-dashed shadow-sm">
+                    <div class="w-24 h-24 bg-gradient-to-br from-gray-50 to-gray-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-white">
+                        <span class="text-4xl">🚀</span>
+                    </div>
+                    <h3 class="text-2xl font-extrabold text-gray-900 mb-2">Kanvas Masih Kosong</h3>
+                    <p class="text-gray-500 max-w-md mx-auto font-medium text-sm">Belum ada mahakarya yang berjalan pada periode ini. Klik tombol "New Project" di atas untuk memulai inisiasi.</p>
                 </div>
             @endforelse
         </div>
     </main>
 
-    <div x-show="openCreateModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
-        <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="openCreateModal = false"></div>
-        <div class="flex min-h-full items-center justify-center p-4">
-            <div class="relative transform overflow-hidden rounded-2xl bg-white p-6 shadow-2xl transition-all sm:w-full sm:max-w-xl border border-gray-100">
-                <div class="flex justify-between items-center pb-4 border-b border-gray-100 mb-6">
-                    <h3 class="text-lg font-bold text-gray-900">Inisiasi Proyek Baru</h3>
-                    <button @click="openCreateModal = false" class="text-gray-400 hover:text-black font-semibold text-xl">&times;</button>
+    <div x-cloak x-show="openCreateModal" class="fixed inset-0 z-[100] overflow-y-auto flex items-center justify-center p-4 sm:p-6">
+        
+        <div x-show="openCreateModal" 
+             x-transition.opacity.duration.300ms 
+             class="fixed inset-0 bg-gray-900/60 backdrop-blur-md" 
+             @click="openCreateModal = false"></div>
+        
+        <div x-show="openCreateModal" 
+             x-transition:enter="ease-out duration-300" 
+             x-transition:enter-start="opacity-0 translate-y-8 scale-95" 
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="ease-in duration-200" 
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100" 
+             x-transition:leave-end="opacity-0 translate-y-8 scale-95"
+             class="relative z-[101] bg-white rounded-[2.5rem] p-8 shadow-[0_30px_60px_rgba(0,0,0,0.25)] w-full max-w-3xl border border-gray-100 max-h-[90vh] overflow-y-auto" style="scrollbar-width: thin;">
+            
+            <div class="flex justify-between items-start pb-6 border-b border-gray-100 mb-6 sticky top-0 bg-white z-10">
+                <div>
+                    <h3 class="text-2xl font-extrabold text-gray-900 tracking-tight">Inisiasi Proyek Baru</h3>
+                    <p class="text-sm text-gray-500 font-medium mt-1">Lengkapi parameter di bawah untuk meresmikan workspace klien.</p>
+                </div>
+                <button type="button" @click="openCreateModal = false" class="w-10 h-10 rounded-full bg-gray-50 border border-gray-100 text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            @if(!$activePeriod)
+                <div class="bg-red-50 border border-red-100 rounded-2xl p-6 flex gap-4 items-start">
+                    <div class="bg-white p-2 rounded-xl shadow-sm border border-red-100/50">
+                        <span class="text-2xl">⚠️</span>
+                    </div>
+                    <div>
+                        <h4 class="text-red-800 font-extrabold mb-1">Sistem Terkunci</h4>
+                        <p class="text-sm text-red-600 font-medium leading-relaxed">Anda tidak dapat membuat proyek baru karena tidak ada Periode Kerja yang aktif. Silakan buka kuartal baru di menu <a href="{{ route('performance.index') }}" class="underline font-bold hover:text-red-800">Evaluasi Tim</a> terlebih dahulu.</p>
+                    </div>
+                </div>
+            @else
+            <form action="{{ route('project.store') }}" method="POST" class="space-y-6">
+                @csrf
+                
+                <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100 space-y-5">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Proyek / Aplikasi</label>
+                        <input type="text" name="name" required placeholder="Contoh: Aplikasi Sistem EWS RADAR" class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none shadow-sm">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nama Klien / Instansi</label>
+                            <input type="text" name="client_name" required placeholder="Contoh: Dinas Kesehatan" class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-900 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none shadow-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">No. WhatsApp Klien</label>
+                            <input type="text" name="client_phone" placeholder="Contoh: 0812XXXXXXXX" class="block w-full rounded-2xl border border-gray-200 bg-white px-5 py-3.5 text-sm font-bold text-gray-900 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none shadow-sm">
+                        </div>
+                    </div>
                 </div>
 
-                @if(!$activePeriod)
-                    <p class="text-sm text-red-600 font-medium">Anda tidak dapat menambahkan proyek karena tidak ada Periode Kerja yang sedang aktif saat ini.</p>
-                @else
-                <form action="{{ route('project.store') }}" method="POST" class="space-y-4">
-                    @csrf
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nama Proyek / Aplikasi</label>
-                        <input type="text" name="name" required placeholder="Contoh: Aplikasi RADAR" class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Project Leader (PIC)</label>
+                        <select name="pic_id" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none cursor-pointer">
+                            <option value="">-- Pilih Penanggung Jawab --</option>
+                            @foreach($team as $member)
+                                <option value="{{ $member->id }}">{{ $member->name }} ({{ $member->roles->pluck('name')->first() }})</option>
+                            @endforeach
+                        </select>
                     </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nama Klien / Instansi</label>
-                            <input type="text" name="client_name" required placeholder="Contoh: Budi Santoso" class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">No. WhatsApp Klien</label>
-                            <input type="text" name="client_phone" placeholder="Contoh: 0812XXXXXXXX" class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
-                        </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Finder (Target KPI)</label>
+                        <select name="finder_id" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none cursor-pointer">
+                            <option value="">-- Siapa Pencari Klien Ini? --</option>
+                            @foreach($team as $member)
+                                <option value="{{ $member->id }}">{{ $member->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
+                </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">PIC (Project Leader)</label>
-                            <select name="pic_id" required class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
-                                <option value="">-- Pilih Penanggung Jawab --</option>
-                                @foreach($team as $member)
-                                    <option value="{{ $member->id }}">{{ $member->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Finder (Pencari Mitra)</label>
-                            <select name="finder_id" required class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
-                                <option value="">-- Penghitungan Target KPI --</option>
-                                @foreach($team as $member)
-                                    <option value="{{ $member->id }}">{{ $member->name }}</option>
-                                @endforeach
-                            </select>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nilai Kontrak (Rp)</label>
+                        <div class="relative">
+                            <span class="absolute left-5 top-3.5 text-gray-400 font-extrabold text-sm">Rp</span>
+                            <input type="number" name="total_price" required placeholder="0" class="block w-full rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none">
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nilai Proyek (Total Rp)</label>
-                            <input type="number" name="total_price" required placeholder="0" class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Nominal DP Awal (Rp)</label>
-                            <input type="number" name="dp_amount" value="0" required class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nominal DP Awal (Rp)</label>
+                        <div class="relative">
+                            <span class="absolute left-5 top-3.5 text-gray-400 font-extrabold text-sm">Rp</span>
+                            <input type="number" name="dp_amount" value="0" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 pl-12 pr-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none">
                         </div>
                     </div>
+                </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Tanggal Mulai</label>
-                            <input type="date" name="start_date" required class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Deadline Akhir</label>
-                            <input type="date" name="deadline" required class="block w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-black focus:ring-black">
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Timeline Mulai</label>
+                        <input type="date" name="start_date" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none cursor-pointer">
                     </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Timeline Deadline</label>
+                        <input type="date" name="deadline" required class="block w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-3.5 text-sm font-extrabold text-gray-900 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none cursor-pointer">
+                    </div>
+                </div>
 
-                    <button type="submit" class="w-full bg-black hover:bg-gray-800 text-white rounded-lg py-2.5 font-semibold text-sm transition mt-2 shadow-sm">
-                        Resmikan & Buat Proyek Baru
-                    </button>
-                </form>
-                @endif
-            </div>
+                <button type="submit" class="w-full bg-gray-900 hover:bg-black text-white rounded-2xl py-4 font-extrabold text-sm transition-all duration-300 mt-6 shadow-[0_8px_20px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.25)] hover:-translate-y-0.5 cursor-pointer">
+                    Mulai Kerjakan Proyek &rarr;
+                </button>
+            </form>
+            @endif
         </div>
     </div>
 

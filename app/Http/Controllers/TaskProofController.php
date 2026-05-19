@@ -1,65 +1,39 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Models;
 
-use App\Models\TaskProof;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class TaskProofController extends Controller
+class TaskProof extends Model
 {
+    use HasFactory;
+
     /**
-     * Display a listing of the resource.
+     * Membuka gerbang Mass Assignment untuk berkas UI dan repository push pekerja
      */
-    public function index()
+    protected $fillable = [
+        'task_id',
+        'submitted_by',
+        'ui_screenshot_path',
+        'repo_push_path',
+        'dev_notes',
+    ];
+
+    /**
+     * Relasi: Mengembalikan berkas bukti ini ke Task naungannya
+     */
+    public function task(): BelongsTo
     {
-        //
+        return $this->belongsTo(Task::class, 'task_id');
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Relasi: Mengambil data developer yang mengunggah bukti kerja ini
      */
-    public function create()
+    public function developer(): BelongsTo
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(TaskProof $taskProof)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(TaskProof $taskProof)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, TaskProof $taskProof)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(TaskProof $taskProof)
-    {
-        //
+        return $this->belongsTo(User::class, 'submitted_by');
     }
 }
