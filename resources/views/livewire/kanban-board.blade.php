@@ -2,7 +2,6 @@
      x-data="{ showCreateModal: @entangle('showCreateModal'), showTaskModal: @entangle('showModal') }">
     
     <style>
-        /* Desain Kotak Bayangan Saat Kartu Diseret (Dropzone Hint) */
         .kanban-ghost-placeholder {
             background: rgba(79, 70, 229, 0.04) !important;
             border: 2px dashed #4f46e5 !important;
@@ -12,7 +11,6 @@
             opacity: 0.8 !important;
             margin-bottom: 1rem !important;
         }
-        /* Tulisan Panduan Drop Here Di Dalam Kotak Putus-Putus */
         .kanban-ghost-placeholder::after {
             content: "📍 LETAKKAN DI SINI";
             position: absolute;
@@ -24,11 +22,7 @@
             color: #4f46e5;
             letter-spacing: 0.1em;
         }
-        /* Efek Kartu Asal Saat Sedang Dipegang Kursor */
-        .kanban-chosen-card {
-            opacity: 0.4 !important;
-        }
-        /* Efek Visual Melayang Kartu Menempel Di Ujung Kursor */
+        .kanban-chosen-card { opacity: 0.4 !important; }
         .kanban-drag-card {
             transform: scale(1.04) rotate(2deg) !important;
             box-shadow: 0 30px 60px rgba(0,0,0,0.15) !important;
@@ -91,7 +85,7 @@
             ] as $status => $meta)
             
             <div wire:key="col-frame-{{ Str::slug($status) }}" 
-                 class="w-[335px] h-[calc(100vh-175px)] flex flex-col bg-white/50 backdrop-blur-xl rounded-[2.2rem] border {{ $meta['border'] }} shadow-[0_12px_34px_rgba(0,0,0,0.02)] shrink-0 overflow-hidden transition-all duration-300">
+                 class="w-[335px] h-[calc(100vh-175px)] flex flex-col bg-white/50 backdrop-blur-xl rounded-[2.2rem] border {{ $meta['border'] }} shadow-[0_12px_34px_rgba(0,0,0,0.02)] shrink-0 overflow-hidden transition-all duration-300 hover:shadow-[0_12px_34px_rgba(0,0,0,0.05)] hover:bg-white/60">
                 
                 <div class="px-6 py-5 border-b {{ $meta['border'] }} {{ $meta['header'] }} flex justify-between items-center backdrop-blur-sm z-10 shrink-0">
                     <div class="flex items-center gap-3">
@@ -103,7 +97,7 @@
                     </span>
                 </div>
 
-                <div wire:ignore 
+                <div wire:ignore.self 
                      class="flex-1 overflow-y-auto sortable-list pt-5 px-5 pb-24 space-y-4 rounded-b-[2.2rem] min-h-[450px] bg-transparent/5" 
                      data-status="{{ $status }}" 
                      style="scrollbar-width: none;">
@@ -264,7 +258,7 @@
                     </div>
 
                     <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2.5">Spesifikasi Lembar Kerja</h4>
-                    <p class="text-xs font-bold text-gray-700 bg-white border p-5 rounded-3xl shadow-xs whitespace-pre-wrap mb-6">{{ $selectedTask->description ?? 'Tidak disertakan keterangan pendukung.' }}</p>
+                    <p class="text-xs font-bold text-gray-700 leading-relaxed bg-white border border-gray-100 p-5 rounded-3xl shadow-xs whitespace-pre-wrap mb-6">{{ $selectedTask->description ?? 'Tidak disertakan keterangan pendukung.' }}</p>
 
                     @if($selectedTask->status === 'Review')
                         @role('Founder|Co-Founder|HR')
@@ -402,24 +396,24 @@
             const trackLanes = document.querySelectorAll('.sortable-list');
             
             trackLanes.forEach(lane => {
+                // Hancurkan instansi duplikasi lama guna mencegah kebocoran RAM browser
                 if(lane.sortableInstance) { 
                     lane.sortableInstance.destroy(); 
                 }
                 
-                // Konfigurasi mekanik drag-and-drop mutakhir (Maju Mundur Kebal Bugs)
+                // Konfigurasi mekanik drag-and-drop mutakhir
                 lane.sortableInstance = new Sortable(lane, {
                     group: 'xgrow_kanban_workspace_group',
                     animation: 260,
                     fallbackOnBody: false,
                     swapThreshold: 0.65,
                     invertSwap: true,
-                    emptyInsertThreshold: 20, 
-                    ghostClass: 'kanban-ghost-placeholder', // MEMANGGIL KOTAK PUTUS-PUTUS DROPMENU PRESET
+                    emptyInsertThreshold: 20,
+                    ghostClass: 'kanban-ghost-placeholder',
                     chosenClass: 'kanban-chosen-card',
                     dragClass: 'kanban-drag-card',
                     
                     onStart: function(evt) {
-                        // Sembunyikan tulisan "Kolom Kosong" bawaan agar tidak mengganggu jalannya kartu
                         const placeholder = evt.to.querySelector('.empty-placeholder');
                         if (placeholder) placeholder.style.display = 'none';
                     },
@@ -435,7 +429,7 @@
                             return;
                         }
                         
-                        // Menembakkan update status langsung menggunakan engine global @this milik Livewire v3
+                        // Eksekusi update langsung ke server
                         @this.updateTaskStatus(taskId, newStatus);
                     }
                 });
