@@ -28,10 +28,10 @@ class ProjectController extends Controller
             'deadline'      => 'required|date',
         ]);
 
-        DB::transaction(function () use ($validated, $request) {
-            // 1. Buat Klien Baru (Asumsi: Client baru dibuat tiap project atau ambil yang ada)
+        DB::transaction(function () use ($validated) {
+            // 1. Buat Klien Baru
             $client = Client::create([
-                'name' => $validated['client_name'],
+                'name'  => $validated['client_name'],
                 'phone' => $validated['client_phone'],
             ]);
 
@@ -39,7 +39,7 @@ class ProjectController extends Controller
             $period = \App\Models\Period::where('is_active', true)->firstOrFail();
 
             // 3. Simpan Proyek Baru
-            Project::create([
+            $project = Project::create([
                 'uuid'           => Str::uuid(),
                 'name'           => $validated['name'],
                 'client_id'      => $client->id,
@@ -53,6 +53,17 @@ class ProjectController extends Controller
                 'deadline'       => $validated['deadline'],
                 'status'         => 'Planning',
             ]);
+
+            // 4. Otomatis Catat DP ke Keuangan jika nominal DP lebih besar dari 0
+            if ($validated['dp_amount'] > 0) {
+                \App\Models\Finance::create([
+                    'project_id'  => $project->id,
+                    'amount'      => $validated['dp_amount'],
+                    'type'        => 'Income',
+                    'notes'       => "DP Awal untuk proyek: " . $validated['name'],
+                    'recorded_by' => auth()->id(),
+                ]);
+            }
         });
 
         return redirect()->route('dashboard')->with('success', 'Proyek berhasil diinisiasi.');
@@ -63,21 +74,35 @@ class ProjectController extends Controller
      */
     public function destroy($id)
     {
-        // Mencari proyek berdasarkan ID
-        $project = Project::findOrFail($id);
-        
         // Proteksi Otoritas: Hanya Role Founder, Co-Founder, dan HR yang boleh menghapus
         if (!auth()->user()->hasRole(['Founder', 'Co-Founder', 'HR'])) {
             abort(403, 'Anda tidak memiliki otoritas untuk menghapus data proyek.');
         }
 
-        // Hapus data (SoftDelete akan bekerja karena ada kolom deleted_at)
-        $project->delete();
+        // Mencari proyek berdasarkan ID
+        $project = Project::findOrFail($id);
+        
+        DB::transaction(function () use ($project) {
+            // PERBAIKAN: Hapus total semua data keuangan yang terikat dengan proyek ini 
+            // sehingga pembukuan di page finance ikut bersih tanpa perlu cek kolom 'status'
+            if ($project->finances()) {
+                $project->finances()->delete();
+            }
 
-        return redirect()->route('dashboard')->with('success', 'Proyek berhasil dihapus dari sistem.');
+            // Hapus proyek utama (SoftDelete bekerja jika model menggunakan SoftDeletes)
+            $project->delete();
+        });
+
+        return redirect()->route('dashboard')->with('success', 'Proyek beserta seluruh riwayat keuangan terkait berhasil dihapus dari sistem.');
     }
 
-    // Metode lainnya dibiarkan kosong jika belum diperlukan
-    public function index() { return view('dashboard'); }
-    public function show(Project $project) { return view('projects.show', compact('project')); }
+    public function index() 
+    { 
+        return view('dashboard'); 
+    }
+
+    public function show(Project $project) 
+    { 
+        return view('projects.show', compact('project')); 
+    }
 }
