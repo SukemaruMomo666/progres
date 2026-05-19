@@ -60,6 +60,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/performance', [PerformanceController::class, 'index'])->name('performance.index');
         Route::post('/performance/close', [PerformanceController::class, 'closePeriod'])->name('performance.close');
 
+        Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+
+        Route::get('/admin/users/{user}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
+        Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('admin.users.update');
+
         // Sub-Modul Manajemen Pengguna & Sinkronisasi Peran (Spatie Peran & Keamanan)
         Route::get('/users-management', [UserController::class, 'index'])->name('admin.users.index');
         Route::patch('/users-management/{id}/role', [UserController::class, 'updateRole'])->name('admin.users.update-role');

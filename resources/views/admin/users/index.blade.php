@@ -103,9 +103,32 @@
                                     </select>
                                 </form>
                             </td>
-                            <td class="px-8 py-5 text-right whitespace-nowrap">
-                                <button type="button" @click="openPassModal = true; activeUser = '{{ $user->name }}'; resetUrl = '{{ route('admin.users.reset-password', $user->id) }}'" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:text-indigo-600 font-extrabold text-xs shadow-sm cursor-pointer">🔑 Ganti Sandi</button>
-                            </td>
+<td class="px-8 py-5 text-right whitespace-nowrap flex items-center justify-end gap-2">
+    
+    @if(auth()->user()->hasRole(['Founder', 'Co-Founder', 'HR']) || auth()->id() === $user->id)
+        <a href="{{ route('admin.users.edit', $user->id) }}" class="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:text-indigo-600 font-extrabold text-xs shadow-sm cursor-pointer transition-all">
+            ✏️ Edit
+        </a>
+    @endif
+
+    @role('Founder|Co-Founder|HR')
+        <button type="button" @click="openPassModal = true; activeUser = '{{ $user->name }}'; resetUrl = '{{ route('admin.users.reset-password', $user->id) }}'" class="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-700 hover:text-indigo-600 font-extrabold text-xs shadow-sm cursor-pointer transition-all">
+            🔑 Sandi
+        </button>
+    @endrole
+
+    @role('Founder|Co-Founder|HR')
+        @if($user->id !== auth()->id())
+            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" onsubmit="return confirm('⚠️ HAPUS AKUN: Yakin ingin menghapus {{ $user->name }}? Akses sistem akan dicabut permanen.');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 text-rose-500 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all cursor-pointer" title="Hapus Pengguna">
+                    <svg class="w-4 h-4 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </form>
+        @endif
+    @endrole
+</td>
                         </tr>
                         @endforeach
                     </tbody>

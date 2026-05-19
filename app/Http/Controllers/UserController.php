@@ -89,4 +89,48 @@ class UserController extends Controller
 
         return redirect()->back()->with('success', "Sandi untuk akun {$user->name} berhasil dikonfigurasi ulang!");
     }
+    public function destroy($id)
+    {
+        // Hanya Founder, Co-Founder, dan HR yang bisa hapus
+        if (!auth()->user()->hasRole(['Founder', 'Co-Founder', 'HR'])) {
+            abort(403, 'Akses Dilarang.');
+        }
+
+        $user = \App\Models\User::findOrFail($id);
+        
+        // Mencegah hapus diri sendiri (opsional)
+        if ($user->id === auth()->id()) {
+            return back()->withErrors('Anda tidak bisa menghapus akun Anda sendiri.');
+        }
+
+        $user->delete();
+        return back()->with('success', 'Akun pengguna berhasil dihapus.');
+    }
+    public function edit($id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+
+        // Otorisasi: Hanya Founder/Co/HR atau user itu sendiri yang bisa edit
+        if (!auth()->user()->hasRole(['Founder', 'Co-Founder', 'HR']) && auth()->id() !== (int)$id) {
+            abort(403, 'Anda tidak memiliki izin untuk mengedit profil ini.');
+        }
+
+        $roles = \Spatie\Permission\Models\Role::all();
+        return view('admin.users.edit', compact('user', 'roles'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+
+        // Validasi input
+        $validated = $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+        ]);
+
+        $user->update($validated);
+
+        return redirect()->route('admin.users.index')->with('success', 'Profil pengguna berhasil diperbarui.');
+    }
 }
