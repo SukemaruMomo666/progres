@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\Attributes\On;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
@@ -10,6 +11,7 @@ use App\Models\TaskProof;
 use App\Models\TaskRevision;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
+use App\Events\KanbanUpdated;
 
 class KanbanBoard extends Component
 {
@@ -131,6 +133,8 @@ class KanbanBoard extends Component
             $this->showModal = false;
             $this->selectedTask = null;
             $this->loadTasks();
+            
+            broadcast(new KanbanUpdated())->toOthers();
         }
     }
 
@@ -162,6 +166,8 @@ class KanbanBoard extends Component
         $this->loadTasks();
         $this->selectedTask = Task::with(['assignee', 'proofs'])->find($task->id);
         $this->loadDiscussion();
+        
+        broadcast(new KanbanUpdated())->toOthers();
     }
 
     public function sendComment()
@@ -176,6 +182,8 @@ class KanbanBoard extends Component
 
         $this->newComment = '';
         $this->loadDiscussion(); 
+        
+        broadcast(new KanbanUpdated())->toOthers();
     }
 
     public function createTask()
@@ -194,6 +202,8 @@ class KanbanBoard extends Component
         $this->reset(['newTaskTitle', 'newTaskDescription', 'newTaskAssignee']);
         $this->loadTasks();
         $this->showCreateModal = false; 
+        
+        broadcast(new KanbanUpdated())->toOthers();
     }
 
     public function updateTaskStatus($taskId, $newStatus)
@@ -208,6 +218,20 @@ class KanbanBoard extends Component
             if ($this->selectedTask && $this->selectedTask->id == $taskId) {
                 $this->selectedTask = Task::with(['assignee', 'proofs'])->find($taskId);
             }
+            
+            broadcast(new KanbanUpdated())->toOthers();
+        }
+    }
+
+    #[On('echo:workspace-channel,KanbanUpdated')]
+    public function refreshBoard()
+    {
+        $this->loadTasks();
+        
+        // Memuat ulang diskusi jika sedang ada modal terbuka yang relevan
+        if ($this->selectedTask) {
+            $this->selectedTask = Task::with(['assignee', 'proofs'])->find($this->selectedTask->id);
+            $this->loadDiscussion();
         }
     }
 
