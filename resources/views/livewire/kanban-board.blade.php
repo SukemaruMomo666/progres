@@ -1,5 +1,5 @@
 <div class="h-screen flex flex-col bg-[#F4F7F6] relative overflow-hidden font-sans select-none" 
-     x-data="{ showCreateModal: @entangle('showCreateModal'), showTaskModal: @entangle('showModal') }">
+     x-data="{ showCreateModal: @entangle('showCreateModal'), showTaskModal: @entangle('showModal'), previewImage: null }">
     
     <style>
         .kanban-ghost-placeholder {
@@ -84,10 +84,6 @@
                 'To Do'       => ['tasks' => $tasksToDo, 'bg' => 'bg-slate-50', 'border' => 'border-slate-200/80', 'header' => 'bg-white/70', 'dot' => 'bg-slate-400', 'text' => 'text-slate-700'],
                 'In Progress' => ['tasks' => $tasksInProgress, 'bg' => 'bg-blue-50/40', 'border' => 'border-blue-100/70', 'header' => 'bg-blue-50/50', 'dot' => 'bg-blue-500', 'text' => 'text-blue-700'],
                 'Review'      => ['tasks' => $tasksReview, 'bg' => 'bg-amber-50/40', 'border' => 'border-amber-100/70', 'header' => 'bg-amber-50/50', 'dot' => 'bg-amber-500', 'text' => 'text-amber-700'],
-                
-                // TAMBAHKAN BLOK INI DI ANTARA REVIEW DAN DONE:
-                
-                
                 'Done'        => ['tasks' => $tasksDone, 'bg' => 'bg-emerald-50/40', 'border' => 'border-emerald-100/70', 'header' => 'bg-emerald-50/50', 'dot' => 'bg-emerald-500', 'text' => 'text-emerald-700']
             ] as $status => $meta)
             
@@ -320,11 +316,13 @@
                         <h4 class="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">📁 Berkas Lampiran Hasil Transmisi</h4>
                         <div class="grid grid-cols-2 gap-4">
                             @foreach($selectedTask->proofs as $proof)
-                                <div class="rounded-2xl overflow-hidden border border-gray-200 bg-black relative group shadow-xs">
+                                <div @click="previewImage = '{{ asset('storage/' . $proof->ui_screenshot_path) }}'" 
+                                     class="rounded-2xl overflow-hidden border border-gray-200 bg-black relative group shadow-xs cursor-pointer">
                                     <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-md text-[8px] font-black text-white px-2 py-0.5 rounded-md z-10 tracking-wider">UI RESULT</span>
                                     <img src="{{ asset('storage/' . $proof->ui_screenshot_path) }}" class="w-full h-28 object-cover opacity-90 group-hover:scale-105 transition-transform duration-300">
                                 </div>
-                                <div class="rounded-2xl overflow-hidden border border-gray-200 bg-black relative group shadow-xs">
+                                <div @click="previewImage = '{{ asset('storage/' . $proof->repo_push_path) }}'" 
+                                     class="rounded-2xl overflow-hidden border border-gray-200 bg-black relative group shadow-xs cursor-pointer">
                                     <span class="absolute top-2 left-2 bg-black/70 backdrop-blur-md text-[8px] font-black text-white px-2 py-0.5 rounded-md z-10 tracking-wider">GIT REPO PUSH</span>
                                     <img src="{{ asset('storage/' . $proof->repo_push_path) }}" class="w-full h-28 object-cover opacity-90 group-hover:scale-105 transition-transform duration-300">
                                 </div>
@@ -411,6 +409,29 @@
 
             </div>
             @endif
+        </div>
+    </div>
+
+    <div x-cloak x-show="previewImage !== null" class="fixed inset-0 z-[120] overflow-hidden flex items-center justify-center p-4 sm:p-6">
+        
+        <div x-show="previewImage !== null" 
+             x-transition.opacity.duration.300ms 
+             class="fixed inset-0 bg-gray-900/90 backdrop-blur-md cursor-zoom-out" 
+             @click="previewImage = null"></div>
+
+        <div x-show="previewImage !== null" 
+             x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+             class="relative z-[121] max-w-6xl w-full flex justify-center"
+             x-trap="previewImage !== null">
+            
+            <button type="button" 
+                    @click="previewImage = null" 
+                    class="absolute -top-12 right-0 md:-right-12 w-10 h-10 rounded-full bg-white/10 hover:bg-white border border-white/20 hover:border-transparent flex items-center justify-center text-white hover:text-gray-900 transition-all cursor-pointer shadow-lg backdrop-blur-sm">
+                <svg class="w-5 h-5 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            
+            <img :src="previewImage" class="max-h-[85vh] rounded-2xl shadow-[0_30px_70px_rgba(0,0,0,0.5)] object-contain border border-white/10">
         </div>
     </div>
 
