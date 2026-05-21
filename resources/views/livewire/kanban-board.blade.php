@@ -412,7 +412,7 @@
         </div>
     </div>
 
-    <div x-cloak x-show="previewImage !== null" class="fixed inset-0 z-[120] overflow-hidden flex items-center justify-center p-4 sm:p-6">
+<div x-cloak x-show="previewImage !== null" style="z-index: 9999;" class="fixed inset-0 overflow-hidden flex items-center justify-center p-4 sm:p-6">
         
         <div x-show="previewImage !== null" 
              x-transition.opacity.duration.300ms 
@@ -420,9 +420,10 @@
              @click="previewImage = null"></div>
 
         <div x-show="previewImage !== null" 
+             style="z-index: 10000;"
              x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
              x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
-             class="relative z-[121] max-w-6xl w-full flex justify-center"
+             class="relative max-w-6xl w-full flex justify-center"
              x-trap="previewImage !== null">
             
             <button type="button" 
