@@ -75,8 +75,8 @@
         </button>
     </div>
 
-<div wire:poll.2s class="flex-1 overflow-x-auto overflow-y-hidden p-6 sm:p-8 relative z-10 custom-horizontal-track" 
-     style="scrollbar-width: thin; scrollbar-color: #e2e8f0 transparent;">
+    <div class="flex-1 overflow-x-auto overflow-y-hidden p-6 sm:p-8 relative z-10 custom-horizontal-track" 
+         style="scrollbar-width: thin; scrollbar-color: #e2e8f0 transparent;">
         <div class="flex gap-6 h-full min-w-max items-start pb-4">
             
             @foreach([
